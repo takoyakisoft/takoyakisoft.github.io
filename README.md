@@ -1,4 +1,5 @@
 # ウェブツール集 (React + TypeScript + Vite 版)
+https://takoyakisoft.github.io/takoyakisoft/
 
 これは、日常的に使える便利なウェブツールを提供するアプリケーションです。
 React, TypeScript, Vite を使用して構築されています。
@@ -27,13 +28,13 @@ React, TypeScript, Vite を使用して構築されています。
 
 2.  **依存関係をインストールします:**
     ```bash
-    npm install
+    bun install
     ```
-    もし `typescript` や `tsc` に関するエラーが出る場合は、`npm install` を再度実行するか、グローバルに `typescript` がインストールされているか確認してください。
+    もし `typescript` や `tsc` に関するエラーが出る場合は、`bun install` を再度実行するか、グローバルに `typescript` がインストールされているか確認してください。
 
 3.  **開発サーバーを起動します:**
     ```bash
-    npm run dev
+    bun run dev
     ```
     開発サーバーが起動し、通常は `http://localhost:5173` (または利用可能なポート) でアプリケーションにアクセスできます。
 
@@ -42,7 +43,7 @@ React, TypeScript, Vite を使用して構築されています。
 プロダクション用にアプリケーションをビルドするには、以下のコマンドを実行します:
 
 ```bash
-npm run build
+bun run build
 ```
 
 このコマンドは `tsc -b && vite build` を実行し、TypeScriptの型チェックとViteによるビルドを行います。
