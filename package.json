@@ -11,19 +11,19 @@
   },
   "dependencies": {
     "@types/react-beautiful-dnd": "^13.1.8",
+    "dhtmlx-gantt": "^9.0.11",
     "react": "^19.1.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^19.1.0",
-    "dhtmlx-gantt": "^8.0.7",
     "react-router-dom": "^7.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.0",
     "biome": "^0.3.3",
-    "globals": "^16.0.0",
+    "globals": "^16.2.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
   }

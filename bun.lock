@@ -4,22 +4,22 @@
     "": {
       "name": "takoyakisoft",
       "dependencies": {
-        "@types/react-beautiful-dnd": "^13.1.8",
-        "dhtmlx-gantt": "^8.0.7",
-        "react": "^19.1.0",
-        "react-beautiful-dnd": "^13.1.1",
-        "react-dom": "^19.1.0",
-        "react-router-dom": "^7.6.1",
+        "@types/react-beautiful-dnd": "latest",
+        "dhtmlx-gantt": "latest",
+        "react": "latest",
+        "react-beautiful-dnd": "latest",
+        "react-dom": "latest",
+        "react-router-dom": "latest",
       },
       "devDependencies": {
-        "@types/node": "^22.15.29",
-        "@types/react": "^19.1.2",
-        "@types/react-dom": "^19.1.2",
-        "@vitejs/plugin-react": "^4.4.1",
-        "biome": "^0.3.3",
-        "globals": "^16.0.0",
-        "typescript": "~5.8.3",
-        "vite": "^6.3.5",
+        "@types/node": "latest",
+        "@types/react": "latest",
+        "@types/react-dom": "latest",
+        "@vitejs/plugin-react": "latest",
+        "biome": "latest",
+        "globals": "latest",
+        "typescript": "latest",
+        "vite": "latest",
       },
     },
   },
@@ -258,7 +258,7 @@
 
     "delayed-stream": ["delayed-stream@1.0.0", "", {}, "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ=="],
 
-    "dhtmlx-gantt": ["dhtmlx-gantt@8.0.11", "", {}, "sha512-bNC5WBncKCmkyW5y7NNPB7NuEv7GCw7Z3ZdjJPQgPc9nySl/EOhuJCb86vPP6rpqMWeymGR2t3nrKMLtEyBPeg=="],
+    "dhtmlx-gantt": ["dhtmlx-gantt@9.0.11", "", {}, "sha512-tbJ4RYud/uSw4MpdBoTxolW7DzCtOnLNzxpFptP0Zqw1yaaNhU7s4Jfq3RnnkmD5WEdFx9bJ+6w6LovegFDHJw=="],
 
     "earlgrey-runtime": ["earlgrey-runtime@0.1.2", "", { "dependencies": { "core-js": "^2.4.0", "kaiser": ">=0.0.4", "lodash": "^4.17.2", "regenerator-runtime": "^0.9.5" } }, "sha512-T4qoScXi5TwALDv8nlGTvOuCT8jXcKcxtO8qVdqv46IA2GHJfQzwoBPbkOmORnyhu3A98cVVuhWLsM2CzPljJg=="],
 
