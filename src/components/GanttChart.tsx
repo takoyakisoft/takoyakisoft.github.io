@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gantt } from 'dhtmlx-gantt';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
+import 'dhtmlx-gantt/codebase/locale/locale_jp.js'; // Import Japanese locale
 import './GanttTaskColors.css'; // Import custom task color styles
 import styles from './GanttChart.module.css';
 
@@ -84,22 +85,69 @@ const transformTasksForDhtmlx = (tasksToTransform: Array<any>): DhtmlxTask[] => 
   });
 };
 
+const zoomLevels = [
+  {
+    name: 'Day',
+    scales: [
+      { unit: "month", step: 1, format: "%F, %Y" },
+      { unit: "day", step: 1, format: "%j, %D" }
+    ],
+    min_column_width: 60,
+  },
+  {
+    name: 'Week',
+    scales: [
+      { unit: "month", step: 1, format: "%F, %Y" },
+      { unit: "week", step: 1, format: "Week #%W" }
+    ],
+    min_column_width: 100,
+  },
+  {
+    name: 'Month',
+    scales: [
+      { unit: "year", step: 1, format: "%Y" },
+      { unit: "month", step: 1, format: "%F" }
+    ],
+    min_column_width: 120,
+  },
+];
 
 const GanttChart: React.FC = () => {
   const ganttContainerRef = useRef<HTMLDivElement>(null);
-  // Using a state for tasks to allow potential updates, though dhtmlx-gantt primarily manipulates DOM directly
   const [tasks, setTasks] = useState<DhtmlxTask[]>(transformTasksForDhtmlx(initialDataFromPrevLib));
+  const tasksRef = useRef<DhtmlxTask[]>(tasks); // Ref to hold current tasks for event handlers
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  const [currentZoomLevelName, setCurrentZoomLevelName] = useState<string>(zoomLevels[1].name); // Default to Week view
+
+  const setZoomConfiguration = (levelName: string) => {
+    const zoomConfig = zoomLevels.find(zl => zl.name === levelName);
+    if (zoomConfig && gantt) {
+      gantt.config.scales = zoomConfig.scales;
+      gantt.config.min_column_width = zoomConfig.min_column_width;
+      if (ganttContainerRef.current && gantt.getGanttInstance()){ // Check if gantt is initialized
+        gantt.render();
+      }
+      setCurrentZoomLevelName(levelName);
+    }
+  };
 
   useEffect(() => {
     if (!ganttContainerRef.current) return;
 
+    // Apply Japanese locale
+    gantt.i18n.setLocale("jp");
+
     // Basic configuration
-    gantt.config.date_format = "%Y-%m-%d"; // Matches formatDate output
-    gantt.config.work_time = true; // Enable working time calculation
-    // gantt.config.skip_off_time = true; // If true, holidays will be skipped in duration calculation.
-                                      // Set to false or comment out if holidays should be counted as regular days for task duration.
-                                      // For visual highlighting only, this can be true.
-    gantt.config.autosize = "y"; // Adjust height to content
+    gantt.config.date_format = "%Y-%m-%d";
+    gantt.config.work_time = true;
+    gantt.config.autosize = "y";
+
+    // Set initial zoom configuration
+    // setZoomConfiguration(currentZoomLevelName); // Call this after gantt.init
 
     // Timeline cell class template for holiday styling
     gantt.templates.timeline_cell_class = function(task, date): string {
@@ -188,15 +236,57 @@ const GanttChart: React.FC = () => {
 
     // Initialize Gantt
     gantt.init(ganttContainerRef.current);
+    setZoomConfiguration(currentZoomLevelName); // Apply initial zoom after init
+
+    const onBeforeRowDragEndId = gantt.attachEvent("onBeforeRowDragEnd", (id, targetParentId, tindex) => {
+      const currentTasks = tasksRef.current;
+      const draggedTask = gantt.getTask(id);
+
+      // Only allow reordering if the task is dragged within its original parent
+      // For root tasks, draggedTask.parent is often 0 or a root_id. targetParentId would be the same.
+      if (String(draggedTask.parent) !== String(targetParentId)) {
+        // If parent changes, let dhtmlx-gantt handle it or disallow.
+        // For now, we only implement custom logic for same-parent reorder.
+        return true;
+      }
+
+      let newTasks = [...currentTasks];
+      const sourceTaskIndex = newTasks.findIndex(t => t.id === id);
+
+      if (sourceTaskIndex === -1) {
+        return true; // Task not found in our state, should not happen
+      }
+
+      // Remove the task from its original position
+      const [movedTask] = newTasks.splice(sourceTaskIndex, 1);
+
+      // Determine actual target index in the newTasks array.
+      // This is the most complex part. tindex is the visual index among siblings.
+      // If all tasks are at root and newTasks is flat and sorted as displayed, tindex might be direct.
+      // For simplicity as a first pass, let's assume tindex is the target index in the overall `newTasks` array.
+      // This works if tasks are primarily at the root or displayed flatly.
+      // A more robust solution would reorder within a filtered list of siblings and then merge back.
+
+      // If the task is moved to the very end (tindex might be equal to currentTasks.length or siblings.length)
+      if (tindex >= newTasks.length) {
+         newTasks.push(movedTask);
+      } else {
+         newTasks.splice(tindex, 0, movedTask);
+      }
+
+      setTasks(newTasks);
+      return false; // Prevent default dhtmlx-gantt row drag processing
+    });
 
     // Load data
     gantt.parse({ data: getTypedTasks(tasks) });
 
     // Cleanup on unmount
     return () => {
+      gantt.detachEvent(onBeforeRowDragEndId);
       gantt.clearAll();
     };
-  }, []); // Run once on mount. Be careful with dependencies if gantt, tasks, etc. are used from outside.
+  }, [setTasks, currentZoomLevelName]); // Added setTasks and currentZoomLevelName to dependencies
 
   // Effect for handling task updates if `tasks` state changes from React's perspective
   useEffect(() => {
@@ -210,14 +300,139 @@ const GanttChart: React.FC = () => {
     };
 
     gantt.clearAll();
-    gantt.parse({ data: getTypedTasks(tasks) });
+    // When tasks array is updated (e.g. by drag-drop), re-parse it
+    gantt.parse({ data: getTypedTasks(tasksRef.current) }); // Use tasksRef.current to ensure parsing the latest
     // gantt.refreshData(); // Alternatively, if data structure is maintained by dhtmlx-gantt
-  }, [tasks]); // Re-run if `tasks` array reference changes
+  }, [tasks]); // Re-run if `tasks` array reference changes (the actual state `tasks`)
 
+  const handleAddTask = () => {
+    const today = new Date();
+    const newTask: DhtmlxTask = {
+      id: gantt.uid(),
+      text: "New Task",
+      start_date: formatDate(today), // formatDate is defined above
+      duration: 1,
+      progress: 0,
+      type: gantt.config.types.task,
+    };
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    // Ensure the lightbox opens for the new task.
+    // It's often better to do this after Gantt has processed the new task.
+    // A common pattern is to use gantt.attachEvent("onTaskCreated", ...)
+    // or call showLightbox after a brief timeout if direct call doesn't work.
+    // For now, let's assume the re-parse might be enough, or we can refine.
+    // If issues, this is a place to investigate:
+    // setTimeout(() => {
+    //   if (gantt.isTaskExists(newTask.id)) {
+    //     gantt.showLightbox(newTask.id);
+    //   }
+    // }, 100); // Small delay to ensure task is rendered
+  };
+
+  const handleExportJson = () => {
+    // For now, export tasks as they are in the state.
+    // Consider stripping any runtime properties added by dhtmlx-gantt if necessary for cleaner export.
+    const jsonString = JSON.stringify(tasks, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gantt_tasks.json';
+    document.body.appendChild(a); // Required for Firefox
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJson = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result;
+        if (typeof content !== 'string') {
+          alert("Failed to read file content.");
+          return;
+        }
+        const importedTasks = JSON.parse(content);
+
+        // Basic validation
+        if (!Array.isArray(importedTasks) ||
+            !importedTasks.every(task =>
+              typeof task.id !== 'undefined' &&
+              typeof task.text === 'string' &&
+              typeof task.start_date === 'string'
+              // Add more checks as needed, e.g., for date format, duration, etc.
+            )) {
+          alert("Invalid JSON structure or missing essential task properties (id, text, start_date).");
+          return;
+        }
+
+        setTasks(importedTasks as DhtmlxTask[]); // Assuming imported tasks match DhtmlxTask structure
+      } catch (error) {
+        console.error("Error parsing JSON file:", error);
+        alert("Failed to parse JSON file. Please ensure it's a valid JSON.");
+      } finally {
+        // Reset file input to allow importing the same file again
+        if (event.target) {
+          event.target.value = '';
+        }
+      }
+    };
+
+    reader.onerror = () => {
+      console.error("Error reading file:", reader.error);
+      alert("Failed to read file.");
+      if (event.target) {
+        event.target.value = '';
+      }
+    };
+
+    reader.readAsText(file);
+  };
 
   return (
     <div className={styles.ganttContainerWrapper}>
       <h2>Gantt Chart (dhtmlx-gantt)</h2>
+      <div className={styles.controlsContainer}>
+        <button onClick={handleAddTask}>
+          Add Task
+        </button>
+        <button onClick={handleExportJson} style={{ marginLeft: '10px' }}>
+          Export JSON
+        </button>
+        {/* File input styled as a button */}
+        <label htmlFor="import-json-file" className={styles.buttonLikeLabel} style={{ marginLeft: '10px' }}>
+          Import JSON
+        </label>
+        <input
+          type="file"
+          id="import-json-file"
+          accept=".json"
+          onChange={handleImportJson}
+          style={{ display: 'none' }}
+        />
+      </div>
+      <div className={styles.controlsContainer} style={{ marginTop: '10px' }}>
+        <span>Zoom: </span>
+        {zoomLevels.map(level => (
+          <button
+            key={level.name}
+            onClick={() => setZoomConfiguration(level.name)}
+            style={{
+              marginLeft: '5px',
+              backgroundColor: currentZoomLevelName === level.name ? '#d3d3d3' : undefined
+            }}
+            disabled={currentZoomLevelName === level.name}
+          >
+            {level.name}
+          </button>
+        ))}
+      </div>
       <div
         ref={ganttContainerRef}
         className={styles.ganttChartArea} // Apply specific styles for height, etc.
