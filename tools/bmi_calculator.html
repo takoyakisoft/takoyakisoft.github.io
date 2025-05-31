@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI計算機 - ウェブツール集</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <h1>BMI計算機</h1>
+    </header>
+
+    <main>
+        <div class="tool-container">
+            <form id="bmiForm">
+                <div>
+                    <label for="weight">体重 (kg):</label>
+                    <input type="text" id="weight" name="weight" required placeholder="例: 65">
+                </div>
+                <div>
+                    <label for="height">身長 (cm):</label>
+                    <input type="text" id="height" name="height" required placeholder="例: 170">
+                </div>
+                <button type="submit">計算する</button>
+            </form>
+
+            <div id="resultArea" style="margin-top: 20px;">
+                <!-- 結果はここに表示されます -->
+            </div>
+            <div id="errorArea" style="color: red; margin-top: 10px;">
+                <!-- エラーメッセージはここに表示されます -->
+            </div>
+        </div>
+        <p style="margin-top: 20px;"><a href="../index.html">トップページに戻る</a></p>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 ウェブツール集</p>
+    </footer>
+    <script src="../js/bmi_calculator.js"></script>
+</body>
+</html>
