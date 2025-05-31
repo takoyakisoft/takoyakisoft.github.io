@@ -1,5 +1,5 @@
 # ウェブツール集 (React + TypeScript + Vite 版)
-https://takoyakisoft.github.io/takoyakisoft/
+https://takoyakisoft.github.io/
 
 これは、日常的に使える便利なウェブツールを提供するアプリケーションです。
 React, TypeScript, Vite を使用して構築されています。
