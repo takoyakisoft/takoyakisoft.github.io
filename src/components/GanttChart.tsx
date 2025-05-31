@@ -3,8 +3,8 @@ import {
   DragDropContext,
   Droppable,
   Draggable,
-  DropResult,
-  DraggableStateSnapshot, // Import DraggableStateSnapshot
+  type DropResult,
+  type DraggableStateSnapshot, // Import DraggableStateSnapshot
 } from 'react-beautiful-dnd';
 import Task from './Task';
 import styles from './GanttChart.module.css'; // Import css modules
@@ -130,6 +130,7 @@ const GanttChart: React.FC = () => {
         )}
       </Droppable>
     </DragDropContext>
+  </div>
   );
 };
 
