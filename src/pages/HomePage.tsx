@@ -19,6 +19,11 @@ const HomePage: React.FC = () => {
                             温度変換ツール
                         </Link>
                     </li>
+                    <li>
+                        <Link to="/gantt" className={styles.toolLink}>
+                            ガントチャート
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </div>

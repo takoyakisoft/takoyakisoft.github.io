@@ -3,6 +3,7 @@ import { Routes, Route, Link, NavLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import BmiPage from './pages/BmiPage';
 import TemperaturePage from './pages/TemperaturePage';
+import GanttPage from './pages/GanttPage';
 
 function App() {
   return (
@@ -19,6 +20,9 @@ function App() {
             <NavLink to="/temperature-converter" className={({isActive}) => isActive ? styles.active : ''}>
               温度変換ツール
             </NavLink>
+            <NavLink to="/gantt" className={({isActive}) => isActive ? styles.active : ''}>
+              ガントチャート
+            </NavLink>
           </div>
         </nav>
       </header>
@@ -28,6 +32,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/bmi-calculator" element={<BmiPage />} />
           <Route path="/temperature-converter" element={<TemperaturePage />} />
+          <Route path="/gantt" element={<GanttPage />} />
         </Routes>
       </main>
 
