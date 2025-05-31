@@ -1,0 +1,55 @@
+.appHeader {
+  background-color: #2c3e50; /* Dark blue-gray */
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.appNav {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navLogo a {
+  color: #ecf0f1; /* Light gray */
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+.navLogo a:hover {
+  color: #ffffff;
+}
+
+.navLinks a {
+  color: #bdc3c7; /* Medium gray */
+  margin-left: 1.5rem;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.navLinks a:hover,
+.navLinks a.active { /* Assuming activeClassName might be used or manual active state */
+  color: #ffffff;
+}
+
+.appMain {
+  flex: 1; /* Ensures main content takes available space */
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem 2rem 1rem; /* Added bottom padding */
+}
+
+.appFooter {
+  text-align: center;
+  padding: 1.5rem 0;
+  background-color: #34495e; /* Slightly lighter dark blue-gray */
+  color: #ecf0f1;
+  margin-top: auto; /* Pushes footer to the bottom */
+  font-size: 0.9rem;
+}

@@ -1,0 +1,43 @@
+.homePage {
+  text-align: center;
+  padding: 2rem 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.homePage h1 {
+  color: #34495e; /* Darker blue-gray */
+  margin-bottom: 1rem;
+}
+
+.homePage p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.toolList {
+  list-style-type: none;
+  padding: 0;
+}
+
+.toolList li {
+  margin: 1rem 0;
+}
+
+.toolLink {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: #3498db; /* Bright blue */
+  color: white;
+  font-size: 1.2rem;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toolLink:hover {
+  background-color: #2980b9; /* Darker blue */
+  text-decoration: none; /* Ensure no underline on hover for buttons */
+}

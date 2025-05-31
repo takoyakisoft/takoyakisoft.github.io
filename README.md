@@ -1,59 +1,64 @@
-# Webツール集 (Static HTML Version)
+# ウェブツール集 (React + TypeScript + Vite 版)
 
-これは、便利なウェブツールを提供する静的HTMLベースのウェブサイトです。GitHub Pagesでのホスティングを念頭に置いて作成されています。
+これは、日常的に使える便利なウェブツールを提供するアプリケーションです。
+React, TypeScript, Vite を使用して構築されています。
 
-## 現在利用可能なツール
+## 主な機能
 
--   **[BMI計算機](tools/bmi_calculator.html)**: 体重と身長からBMI（ボディマス指数）を計算します。
+現在利用可能なツールは以下の通りです。
 
-## 特徴
+- **BMI計算機**: 体重と身長からBMI（体格指数）を計算します。
+- **温度変換ツール**: 摂氏と華氏の温度を相互に変換します。
 
--   モダンでシンプルなデザイン
--   HTML, CSS, JavaScriptのみで構築 (サーバーサイド処理なし)
--   日本語インターフェース
--   簡単に追加可能なツールフレームワーク
+## 使用技術
 
-## ローカルでの実行方法
+- [Vite](https://vitejs.dev/) - 高速なフロントエンドビルドツール
+- [React](https://reactjs.org/) - UI構築のためのJavaScriptライブラリ
+- [TypeScript](https://www.typescriptlang.org/) - JavaScriptに静的型付けを追加
+- [React Router DOM](https://reactrouter.com/) - Reactアプリケーションのためのルーティング
 
-1.  このリポジトリをクローンまたはダウンロードします。
-2.  ルートディレクトリにある `index.html` ファイルを直接お好みのウェブブラウザで開いてください。
-    -   例: `file:///path/to/repository/index.html`
+## セットアップと実行方法
 
-特別なビルドプロセスや依存関係のインストールは不要です。
+1.  **リポジトリをクローンします (もしクローンしていない場合):**
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
 
-## 新しいツールの追加方法
+2.  **依存関係をインストールします:**
+    ```bash
+    npm install
+    ```
+    もし `typescript` や `tsc` に関するエラーが出る場合は、`npm install` を再度実行するか、グローバルに `typescript` がインストールされているか確認してください。
 
-1.  **HTMLファイルの作成**:
-    -   新しいツールのためのHTMLファイルを作成し、`tools/` ディレクトリに配置します。
-    -   例: `tools/my_new_tool.html`
-    -   このHTMLファイルには、ツールのユーザーインターフェース全体を記述します。
-    -   CSSは、メインの `css/style.css` を利用するか、ツール固有のスタイルをHTMLファイル内に `<style>` タグで記述、または `css/` ディレクトリに専用CSSファイルを作成してリンクします。
+3.  **開発サーバーを起動します:**
+    ```bash
+    npm run dev
+    ```
+    開発サーバーが起動し、通常は `http://localhost:5173` (または利用可能なポート) でアプリケーションにアクセスできます。
 
-2.  **JavaScriptロジックの作成 (必要な場合)**:
-    -   ツールがクライアントサイドでの動的な処理を必要とする場合は、`js/` ディレクトリに専用のJavaScriptファイルを作成します。
-    -   例: `js/my_new_tool.js`
-    -   作成したツールのHTMLファイルから、このJavaScriptファイルを `<script src="../js/my_new_tool.js"></script>` のように相対パスで読み込みます。
+## ビルド方法
 
-3.  **トップページへのリンク追加**:
-    -   作成した新しいツールへのリンクを、ルートの `index.html` ファイル内にある `<ul id="tool-list">` のリストに手動で追加します。
-    -   例: `<li><a href="tools/my_new_tool.html">新しいツールの名前</a></li>`
+プロダクション用にアプリケーションをビルドするには、以下のコマンドを実行します:
 
-## JavaScriptテスト (BMI計算機)
+```bash
+npm run build
+```
 
-BMI計算機 (`js/bmi_calculator.js`) には、基本的なテスト関数が含まれています。テストを実行するには:
+このコマンドは `tsc -b && vite build` を実行し、TypeScriptの型チェックとViteによるビルドを行います。
+(注意: 環境によっては `package.json` の build スクリプトを `./node_modules/.bin/tsc -b && vite build` のようにローカルのtscを明示的に指す必要がある場合があります。)
 
-1.  `tools/bmi_calculator.html` をブラウザで開きます。
-2.  ブラウザの開発者コンソールを開きます。
-3.  コンソールで `runBmiTests()` と入力して実行します。
-    -   テストのPASS/FAILがコンソールに出力されます。
-    -   このテストは、`calculateBmiValue` 関数と `getBmiCategory` 関数の基本的な動作を確認するためのものです。
+## 成果物
 
-## 今後の展望
+ビルドされた静的ファイルは、プロジェクトルートの `dist` ディレクトリに出力されます。
+この `dist` ディレクトリの内容をウェブサーバーにデプロイすることで、アプリケーションを公開できます。
 
--   さらに多くの便利なツールを追加。
--   PWA (Progressive Web App) 対応。
--   アクセシビリティの向上。
+## 今後の展望 (例)
 
-## コントリビューション
+- さらに多くの便利なツールを追加
+- ユニットテスト/E2Eテストの拡充
+- PWA対応
+- デザインのさらなる洗練
 
-バグ報告や新しいツールの提案は、Issueを通じてお願いします。プルリクエストも歓迎します。
+---
+&copy; {new Date().getFullYear()} ウェブツール集
