@@ -376,25 +376,8 @@ const GanttChart: React.FC = () => {
 		};
 	}, [currentZoomLevelName, setZoomConfiguration, tasks]);
 
-	// Effect for handling task updates if `tasks` state changes from React's perspective
-	useEffect(() => {
-		// This effect will run if the `tasks` state managed by React changes.
-		// It re-initializes the types and re-parses the data.
-		const getTypedTasks = (currentTasks: DhtmlxTask[]): DhtmlxTask[] => {
-			return currentTasks.map((task) => ({
-				...task,
-				type:
-					task.id === "milestone-1"
-						? gantt.config.types.milestone
-						: gantt.config.types.task,
-			}));
-		};
-
-		gantt.clearAll();
-		// When tasks array is updated (e.g. by drag-drop), re-parse it
-		gantt.parse({ data: getTypedTasks(tasks) }); // Use tasks directly
-		// gantt.refreshData(); // Alternatively, if data structure is maintained by dhtmlx-gantt
-	}, [tasks]); // Re-run if `tasks` array reference changes (the actual state `tasks`)
+	// Removed the useEffect that watches [tasks] as the main useEffect already covers it,
+	// and it was likely causing double parse/clearAll calls.
 
 	const handleAddTask = () => {
 		const today = new Date();
@@ -543,6 +526,7 @@ const GanttChart: React.FC = () => {
 				ref={ganttContainerRef}
 				className={styles.ganttChartArea} // Apply specific styles for height, etc.
 				style={{ width: "100%", height: "500px" }} // Ensure container has dimensions
+				aria-label="gantt-chart-area" // Added for testability
 			/>
 		</div>
 	);
