@@ -184,7 +184,7 @@ const GanttChart: React.FC = () => {
 		if (zoomConfig && gantt) {
 			gantt.config.scales = zoomConfig.scales;
 			gantt.config.min_column_width = zoomConfig.min_column_width;
-			if (ganttContainerRef.current && gantt.getGanttInstance()) {
+			if (ganttContainerRef.current && gantt && typeof gantt.render === 'function') {
 				// Check if gantt is initialized
 				gantt.render();
 			}
