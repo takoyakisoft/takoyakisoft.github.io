@@ -28,12 +28,12 @@ const TemperatureConverter: React.FC = () => {
 		}
 
 		const numValue = Number.parseFloat(value);
-		if (isNaN(numValue)) {
+		if (Number.isNaN(numValue)) {
 			setError("摂氏には数値を入力してください。");
 			setFahrenheit("");
 		} else {
 			const converted = convertCelsiusToFahrenheit(numValue);
-			setFahrenheit(Math.round(converted * 100) / 100 + ""); // 丸めて文字列に
+			setFahrenheit(`${Math.round(converted * 100) / 100}`); // 丸めて文字列に
 		}
 	};
 
@@ -50,12 +50,12 @@ const TemperatureConverter: React.FC = () => {
 		}
 
 		const numValue = Number.parseFloat(value);
-		if (isNaN(numValue)) {
+		if (Number.isNaN(numValue)) {
 			setError("華氏には数値を入力してください。");
 			setCelsius("");
 		} else {
 			const converted = convertFahrenheitToCelsius(numValue);
-			setCelsius(Math.round(converted * 100) / 100 + ""); // 丸めて文字列に
+			setCelsius(`${Math.round(converted * 100) / 100}`); // 丸めて文字列に
 		}
 	};
 

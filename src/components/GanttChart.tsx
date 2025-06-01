@@ -1,6 +1,6 @@
 import { gantt } from "dhtmlx-gantt";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import "./GanttTaskColors.css"; // Import custom task color styles
 import styles from "./GanttChart.module.css";
@@ -17,6 +17,15 @@ interface DhtmlxTask {
 	open?: boolean; // Optional: whether the tree branch is opened by default
 	urgency?: "urgent" | "not_urgent"; // New field for custom coloring
 	difficulty?: "easy" | "difficult"; // New field for custom coloring
+}
+
+interface InitialTask {
+	id: number | string;
+	name: string;
+	start: Date;
+	end: Date;
+	parentId?: number;
+	type: string;
 }
 
 const japaneseHolidays2024 = [
@@ -94,7 +103,7 @@ const initialDataFromPrevLib = [
 
 // Transform data to dhtmlx-gantt format
 const transformTasksForDhtmlx = (
-	tasksToTransform: Array<any>,
+	tasksToTransform: Array<InitialTask>,
 ): DhtmlxTask[] => {
 	return tasksToTransform.map((task, index) => {
 		let urgency: "urgent" | "not_urgent" | undefined;
@@ -170,7 +179,7 @@ const GanttChart: React.FC = () => {
 		zoomLevels[1].name,
 	); // Default to Week view
 
-	const setZoomConfiguration = (levelName: string) => {
+	const setZoomConfiguration = useCallback((levelName: string) => {
 		const zoomConfig = zoomLevels.find((zl) => zl.name === levelName);
 		if (zoomConfig && gantt) {
 			gantt.config.scales = zoomConfig.scales;
@@ -181,7 +190,7 @@ const GanttChart: React.FC = () => {
 			}
 			setCurrentZoomLevelName(levelName);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		if (!ganttContainerRef.current) return;
@@ -365,7 +374,7 @@ const GanttChart: React.FC = () => {
 			gantt.detachEvent(onBeforeRowDragEndId);
 			gantt.clearAll();
 		};
-	}, [setTasks, currentZoomLevelName]); // Added setTasks and currentZoomLevelName to dependencies
+	}, [currentZoomLevelName, setZoomConfiguration, tasks]);
 
 	// Effect for handling task updates if `tasks` state changes from React's perspective
 	useEffect(() => {
@@ -383,7 +392,7 @@ const GanttChart: React.FC = () => {
 
 		gantt.clearAll();
 		// When tasks array is updated (e.g. by drag-drop), re-parse it
-		gantt.parse({ data: getTypedTasks(tasksRef.current) }); // Use tasksRef.current to ensure parsing the latest
+		gantt.parse({ data: getTypedTasks(tasks) }); // Use tasks directly
 		// gantt.refreshData(); // Alternatively, if data structure is maintained by dhtmlx-gantt
 	}, [tasks]); // Re-run if `tasks` array reference changes (the actual state `tasks`)
 
@@ -486,8 +495,14 @@ const GanttChart: React.FC = () => {
 		<div className={styles.ganttContainerWrapper}>
 			<h2>Gantt Chart (dhtmlx-gantt)</h2>
 			<div className={styles.controlsContainer}>
-				<button onClick={handleAddTask}>Add Task</button>
-				<button onClick={handleExportJson} style={{ marginLeft: "10px" }}>
+				<button type="button" onClick={handleAddTask}>
+					Add Task
+				</button>
+				<button
+					type="button"
+					onClick={handleExportJson}
+					style={{ marginLeft: "10px" }}
+				>
 					Export JSON
 				</button>
 				{/* File input styled as a button */}
@@ -510,6 +525,7 @@ const GanttChart: React.FC = () => {
 				<span>Zoom: </span>
 				{zoomLevels.map((level) => (
 					<button
+						type="button"
 						key={level.name}
 						onClick={() => setZoomConfiguration(level.name)}
 						style={{
