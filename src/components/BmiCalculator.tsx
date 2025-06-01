@@ -4,7 +4,12 @@ import commonStyles from "./common.module.css";
 
 // BMI計算ロジックをTypeScriptに移植
 const calculateBmiValue = (weight: number, heightCm: number): number | null => {
-	if (isNaN(weight) || isNaN(heightCm) || weight <= 0 || heightCm <= 0) {
+	if (
+		Number.isNaN(weight) ||
+		Number.isNaN(heightCm) ||
+		weight <= 0 ||
+		heightCm <= 0
+	) {
 		return null; // Invalid input
 	}
 	const heightM = heightCm / 100;
@@ -36,7 +41,7 @@ const BmiCalculator: React.FC = () => {
 		const weightNum = Number.parseFloat(weight);
 		const heightNum = Number.parseFloat(height);
 
-		if (isNaN(weightNum) || isNaN(heightNum)) {
+		if (Number.isNaN(weightNum) || Number.isNaN(heightNum)) {
 			setError("体重と身長には数値を入力してください。");
 			return;
 		}
