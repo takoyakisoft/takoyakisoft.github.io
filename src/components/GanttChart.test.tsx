@@ -452,7 +452,6 @@ describe("handleAddTask and JSON Export", () => {
 		const mockToday = new Date(2024, 3, 10); // April 10, 2024
 		vi.setSystemTime(mockToday);
 		(gantt.uid as vi.Mock).mockReturnValue("test-uid-123");
-		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
 		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
 			const endDate = new Date(start_date);
 			endDate.setDate(start_date.getDate() + duration);
