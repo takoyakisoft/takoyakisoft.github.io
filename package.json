@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "npx @biomejs/biome check --write ./src"
+    "check": "npx @biomejs/biome check --write ./src",
+    "test": "vitest"
   },
   "dependencies": {
     "dhtmlx-gantt": "^9.0.11",
@@ -17,12 +18,17 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.5.0",
+    "@vitest/ui": "^3.1.4",
     "globals": "^16.2.0",
+    "jsdom": "^26.1.0",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
   }
 }
