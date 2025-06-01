@@ -485,7 +485,8 @@ const GanttChart: React.FC = () => {
 
 		// Calculate end_date
 		const dateFormat = gantt.config.date_format || "%Y-%m-%d"; // Provide a fallback or ensure it's set
-		const startDateObj = gantt.date.str_to_date(newTask.start_date, dateFormat);
+		const dateParts = newTask.start_date.split('-');
+		const startDateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
 
 		if (startDateObj && typeof newTask.duration === 'number') {
 			const endDateObj = gantt.calculateEndDate({
