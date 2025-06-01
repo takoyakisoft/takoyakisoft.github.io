@@ -4,6 +4,7 @@ import BmiPage from "./pages/BmiPage";
 import GanttPage from "./pages/GanttPage";
 import HomePage from "./pages/HomePage";
 import TemperaturePage from "./pages/TemperaturePage";
+import TicTacToePage from "./pages/TicTacToePage";
 
 function App() {
 	return (
@@ -34,6 +35,12 @@ function App() {
 						>
 							ガントチャート
 						</NavLink>
+						<NavLink
+							to="/tic-tac-toe"
+							className={({ isActive }) => (isActive ? styles.active : "")}
+						>
+							〇×ゲーム
+						</NavLink>
 					</div>
 				</nav>
 			</header>
@@ -43,6 +50,7 @@ function App() {
 					<Route path="/bmi-calculator" element={<BmiPage />} />
 					<Route path="/temperature-converter" element={<TemperaturePage />} />
 					<Route path="/gantt" element={<GanttPage />} />
+					<Route path="/tic-tac-toe" element={<TicTacToePage />} />
 				</Routes>
 			</main>
 			<footer className={styles.appFooter}>
