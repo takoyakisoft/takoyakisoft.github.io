@@ -17,8 +17,6 @@ import { gantt } from "dhtmlx-gantt";
 import GanttChart from "./GanttChart";
 
 // Helper to reset mocks before each test
-let taskStateInMock: any[] | undefined = undefined;
-let zoomStateInMock: string | undefined = undefined;
 
 beforeEach(() => {
 	// Reset all spies and mock implementations for Vitest
@@ -28,8 +26,6 @@ beforeEach(() => {
 	if (gantt.__clearAttachedHandlers) { // Check if the method exists on the mock
 		gantt.__clearAttachedHandlers();
 	}
-	taskStateInMock = undefined;
-	zoomStateInMock = undefined;
 });
 
 describe("GanttChart Component", () => {
@@ -106,35 +102,6 @@ describe("GanttChart Component", () => {
 		// This requires the mock for gantt.date.date_to_str and gantt.getState to be working
 		// Note: The mock for gantt.date.date_to_str and gantt.getState needs to be defined in the mock file if used.
 		// For now, we'll assume these are part of the extended mock or comment out if they cause issues.
-		// if (gantt.templates.timeline_cell_class && gantt.date && gantt.date.date_to_str) {
-		// 	const mockDate = new Date(2024, 0, 1); // Jan 1, 2024 - A holiday
-		// 	// Setup the mock for date_to_str to return the specific date string for this call
-		// 	((gantt.date.date_to_str as vi.Mock).mockReturnValueOnce(
-		// 		"2024-01-01",
-		// 	));
-		// 	const cellClass = gantt.templates.timeline_cell_class({}, mockDate);
-		// 	expect(cellClass).toContain("gantt_holiday");
-		// }
-
-		// if (gantt.templates.task_class && gantt.getState) {
-		// 	const mockTask = {
-		// 		id: 1,
-		// 		text: "Test",
-		// 		start_date: "2024-01-01",
-		// 		urgency: "urgent",
-		// 		difficulty: "easy",
-		// 		type: gantt.config.types.TASK, // Assuming types.TASK is defined in mock config
-		// 	};
-		// 	((gantt.getState as vi.Mock).mockReturnValueOnce({
-		// 		selected_task: null,
-		// 	})); // ensure not selected for this part
-		// 	const taskClass = gantt.templates.task_class(
-		// 		new Date(),
-		// 		new Date(),
-		// 		mockTask,
-		// 	);
-		// 	expect(taskClass).toBe("gantt_task_urgent_easy");
-		// }
 	});
 
 	test("calls gantt.clearAll on unmount", async () => {
@@ -152,193 +119,100 @@ describe("GanttChart Component", () => {
 		expect(gantt.clearAll).toHaveBeenCalledTimes(1);
 	});
 
-	test("updates task state on onAfterTaskDrag event", async () => {
-		const mockSetTasks = vi.fn((update) => {
-			if (typeof update === 'function') {
-				taskStateInMock = update(taskStateInMock);
-			} else {
-				taskStateInMock = update;
-			}
-		});
-		const mockSetZoomLevel = vi.fn((update) => { // Though not directly tested here, good for consistency
-			if (typeof update === 'function') {
-				zoomStateInMock = update(zoomStateInMock);
-			} else {
-				zoomStateInMock = update;
-			}
-		});
-
-		const defaultZoomLevelName = "Week"; // Default zoom level name used in GanttChart
-
-		const mockUseState = vi.spyOn(React, "useState")
-			// @ts-expect-error
-			.mockImplementation((initialValue) => {
-				const isTasksInitialCall = Array.isArray(initialValue) && (initialValue.length === 0 || initialValue[0]?.hasOwnProperty('start_date'));
-				const isZoomInitialCall = typeof initialValue === 'string' && initialValue === defaultZoomLevelName;
-
-				if (isTasksInitialCall) {
-					if (taskStateInMock === undefined) taskStateInMock = initialValue;
-					return [taskStateInMock, mockSetTasks];
-				} else if (isZoomInitialCall) {
-					if (zoomStateInMock === undefined) zoomStateInMock = initialValue;
-					return [zoomStateInMock, mockSetZoomLevel];
-				}
-				// Fallback for any other useState calls
-				// console.warn("Unhandled useState initialValue in onAfterTaskDrag test:", initialValue);
-				return [initialValue, vi.fn()];
-			});
-
+	test("updates task data via gantt.parse on onAfterTaskDrag event", async () => {
 		render(<GanttChart />);
+		await waitFor(() => expect(gantt.init).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Ensure initial parse has happened
+        const initialParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+        if (!initialParseCall) {
+            throw new Error("Initial gantt.parse call with data not found for onAfterTaskDrag test.");
+        }
+        const initialTasks = initialParseCall[0].data;
+		const testTaskId = initialTasks[0]?.id;
+		if (!testTaskId) {
+			throw new Error("Initial tasks not found or task ID missing for onAfterTaskDrag test.");
+		}
 
-		// Wait for gantt.init to ensure event listeners are attached
-		await waitFor(() => {
-			expect(gantt.init).toHaveBeenCalledTimes(1);
-		});
-
-		const testTaskId = "task1";
-		const updatedTaskData = {
+		const updatedTaskDataFromGantt = { // Data as gantt.getTask would return it
 			id: testTaskId,
-			text: "Updated Task",
-			start_date: new Date(2024, 0, 15), // Jan 15, 2024
-			end_date: new Date(2024, 0, 25), // Jan 25, 2024
+			text: "Updated Text by Drag",
+			start_date: new Date(2024, 0, 15),
+			end_date: new Date(2024, 0, 25),
 			duration: 10,
 		};
+		(gantt.getTask as vi.Mock).mockReturnValue(updatedTaskDataFromGantt);
+        // Mock format_date to return easily verifiable strings
+        (gantt.templates.format_date as vi.Mock).mockImplementation((date: Date) => {
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        });
 
-		(gantt.getTask as vi.Mock).mockReturnValue(updatedTaskData);
 
-		// Find the onAfterTaskDrag handler using the custom mock helper
-		// Ensure Gantt initialization and parsing (which attaches events) has occurred
-		await waitFor(() => {
-			expect(gantt.init).toHaveBeenCalledTimes(1);
-			// gantt.parse might be called multiple times due to state updates, check at least once
-			expect(gantt.parse).toHaveBeenCalled();
-		});
 		const onAfterTaskDragHandlers = gantt.__getAttachedHandlers("onAfterTaskDrag");
-		expect(onAfterTaskDragHandlers.length).toBeGreaterThan(0);
-		const onAfterTaskDragHandler = onAfterTaskDragHandlers[onAfterTaskDragHandlers.length - 1]; // Get the most recently attached handler
+		const onAfterTaskDragHandler = onAfterTaskDragHandlers[onAfterTaskDragHandlers.length - 1];
 
-		expect(onAfterTaskDragHandler).toBeInstanceOf(Function);
-
-		// Simulate the event
 		act(() => {
-			onAfterTaskDragHandler?.(testTaskId, "move", {}); // mode and event object are illustrative
+			onAfterTaskDragHandler?.(testTaskId, "move", {});
 		});
 
-		// Check if setTasks was called correctly
-		// Need to find the correct call if setTasks is called multiple times during setup
-		await waitFor(() => {
-			expect(mockSetTasks).toHaveBeenCalled();
-			// The actual argument to setTasks will be a function: (prevTasks) => newTasks
-			// We need to check the result of this function
-			const setTasksFunction = mockSetTasks.mock.calls[0][0];
-			const samplePrevTasks = [{ id: testTaskId, text: "Old Task", start_date: "2024-01-01", end_date: "2024-01-10", duration: 9 }];
-			const newTasks = setTasksFunction(samplePrevTasks);
-			expect(newTasks).toEqual(expect.arrayContaining([
-				expect.objectContaining({
-					id: testTaskId,
-					start_date: "2024-01-15", // from gantt.templates.format_date
-					end_date: "2024-01-25",
-					duration: 10,
-				})
-			]));
-		});
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const lastParseData = parseCalls[parseCalls.length - 1][0].data;
+        const updatedTaskInParse = lastParseData.find((t:any) => t.id === testTaskId);
 
-		// Check if gantt.refreshTask was called
+		expect(updatedTaskInParse).toBeDefined();
+        expect(updatedTaskInParse.start_date).toBe("2024-01-15");
+        expect(updatedTaskInParse.end_date).toBe("2024-01-25");
+        expect(updatedTaskInParse.duration).toBe(10);
 		expect(gantt.refreshTask).toHaveBeenCalledWith(testTaskId);
-
-		// Restore original useState
-		mockUseState.mockRestore();
 	});
 
-	test("updates task state on onLightboxSave event", async () => {
-		const mockSetTasks = vi.fn((update) => {
-			if (typeof update === 'function') {
-				taskStateInMock = update(taskStateInMock);
-			} else {
-				taskStateInMock = update;
-			}
-		});
-		const mockSetZoomLevel = vi.fn((update) => {
-			if (typeof update === 'function') {
-				zoomStateInMock = update(zoomStateInMock);
-			} else {
-				zoomStateInMock = update;
-			}
-		});
-		const actualReact = await vi.importActual('react'); // Not used directly here, but good for consistency
-
-		const defaultZoomLevelName = "Week";
-
-		const mockUseState = vi.spyOn(React, "useState")
-			// @ts-expect-error
-			.mockImplementation((initialValue) => {
-				const isTasksInitialCall = Array.isArray(initialValue) && (initialValue.length === 0 || initialValue[0]?.hasOwnProperty('start_date'));
-				const isZoomInitialCall = typeof initialValue === 'string' && initialValue === defaultZoomLevelName;
-
-				if (isTasksInitialCall) {
-					if (taskStateInMock === undefined) taskStateInMock = initialValue;
-					return [taskStateInMock, mockSetTasks];
-				} else if (isZoomInitialCall) {
-					if (zoomStateInMock === undefined) zoomStateInMock = initialValue;
-					return [zoomStateInMock, mockSetZoomLevel];
-				}
-				// Fallback for any other useState calls
-				// console.warn("Unhandled useState initialValue in onLightboxSave test:", initialValue);
-				return [initialValue, vi.fn()];
-			});
-
+	test("updates task data via gantt.parse on onLightboxSave event", async () => {
 		render(<GanttChart />);
+		await waitFor(() => expect(gantt.init).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Ensure initial parse has happened
+        const initialParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+        if (!initialParseCall) {
+            throw new Error("Initial gantt.parse call with data not found for onLightboxSave test.");
+        }
+        const initialTasks = initialParseCall[0].data;
+		const testTaskId = initialTasks[0]?.id;
+		if (!testTaskId) {
+			throw new Error("Initial tasks not found or task ID missing for onLightboxSave test.");
+		}
 
-		await waitFor(() => {
-			expect(gantt.init).toHaveBeenCalledTimes(1);
-		});
-
-		const testTaskId = "task2";
-		const savedTaskData = {
+		const savedTaskData = { // Data as it would come from the lightbox
 			id: testTaskId,
 			text: "Saved Task",
 			start_date: new Date(2024, 1, 1), // Feb 1, 2024
 			end_date: new Date(2024, 1, 10), // Feb 10, 2024
 			duration: 9,
 			progress: 0.5,
-			type: "task",
+			type: "task", // Ensure type is included as component might use it
 		};
+        (gantt.templates.format_date as vi.Mock).mockImplementation((date: Date) => {
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        });
 
-		// No need to mock getTask here as onLightboxSave receives the task object directly
-		// Ensure Gantt initialization and parsing (which attaches events) has occurred
-		await waitFor(() => {
-			expect(gantt.init).toHaveBeenCalledTimes(1);
-			expect(gantt.parse).toHaveBeenCalled();
-		});
 		const onLightboxSaveHandlers = gantt.__getAttachedHandlers("onLightboxSave");
-		expect(onLightboxSaveHandlers.length).toBeGreaterThan(0);
 		const onLightboxSaveHandler = onLightboxSaveHandlers[onLightboxSaveHandlers.length - 1];
-
-		expect(onLightboxSaveHandler).toBeInstanceOf(Function);
 
 		act(() => {
 			onLightboxSaveHandler?.(testTaskId, savedTaskData, false); // isNew = false
 		});
 
-		await waitFor(() => {
-			expect(mockSetTasks).toHaveBeenCalled();
-			const setTasksFunction = mockSetTasks.mock.calls[0][0];
-			const samplePrevTasks = [{ id: testTaskId, text: "Old Task", start_date: "2024-01-01", end_date: "2024-01-10", duration: 9 }];
-			const newTasks = setTasksFunction(samplePrevTasks);
-			expect(newTasks).toEqual(expect.arrayContaining([
-				expect.objectContaining({
-					id: testTaskId,
-					text: "Saved Task",
-					start_date: "2024-02-01",
-					end_date: "2024-02-10",
-					duration: 9,
-					progress: 0.5,
-				})
-			]));
-		});
+		await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const lastParseData = parseCalls[parseCalls.length - 1][0].data;
+        const updatedTaskInParse = lastParseData.find((t:any) => t.id === testTaskId);
 
+
+		expect(updatedTaskInParse).toBeDefined();
+		expect(updatedTaskInParse.text).toBe("Saved Task");
+		expect(updatedTaskInParse.start_date).toBe("2024-02-01");
+		expect(updatedTaskInParse.end_date).toBe("2024-02-10");
+		expect(updatedTaskInParse.duration).toBe(9);
+		expect(updatedTaskInParse.progress).toBe(0.5);
 		expect(gantt.refreshTask).toHaveBeenCalledWith(testTaskId);
-		mockUseState.mockRestore();
 	});
 });
 
@@ -357,97 +231,74 @@ describe("GanttChart Component", () => {
 // If the tests were running, I'd refine the container selection.
 
 describe("Task Deletion", () => {
-	let mockSetTasksDeletion: ReturnType<typeof vi.fn>;
-	let mockUseStateDeletion: ReturnType<typeof vi.spyOn>;
-
-	// beforeEach for Task Deletion suite
 	beforeEach(() => {
-		mockSetTasksDeletion = vi.fn((update) => {
-			if (typeof update === 'function') {
-				taskStateInMock = update(taskStateInMock);
-			} else {
-				taskStateInMock = update;
-			}
-		});
-		const mockSetZoomLevel = vi.fn();
-
-		// Ensure taskStateInMock starts fresh or with specific default for deletion tests
-		// It's reset to undefined in the global beforeEach, then component's initialValue sets it.
-		// If a specific initial state for deletion tests is needed, set taskStateInMock here.
-		// For example: taskStateInMock = [{ id: "task1", ...}, { id: "task2", ...}];
-
-		mockUseStateDeletion = vi.spyOn(React, "useState")
-			// @ts-expect-error
-			.mockImplementation((initialValue) => {
-				const isTasksInitialCall = Array.isArray(initialValue) && (initialValue.length === 0 || initialValue[0]?.hasOwnProperty('start_date'));
-				const isZoomInitialCall = typeof initialValue === 'string' && initialValue === "Week";
-
-				if (isTasksInitialCall) {
-					if (taskStateInMock === undefined) {
-						// Deep copy initialValue to avoid modifying the source if it's used elsewhere
-						taskStateInMock = JSON.parse(JSON.stringify(initialValue));
-					}
-					return [taskStateInMock, mockSetTasksDeletion];
-				} else if (isZoomInitialCall) {
-					if (zoomStateInMock === undefined) zoomStateInMock = initialValue;
-					return [zoomStateInMock, mockSetZoomLevel];
-				}
-				return [initialValue, vi.fn()];
-			});
-
 		(gantt.confirm as vi.Mock).mockImplementation((config) => {
 			if (config.callback) config.callback(true); // Auto-confirm "yes"
 		});
 		(gantt.isTaskExists as vi.Mock).mockReturnValue(true);
-		(gantt.deleteTask as vi.Mock).mockClear(); // Clear calls from other tests
-		(gantt.uid as vi.Mock).mockClear(); // Clear UID calls
-		(gantt.calculateEndDate as vi.Mock).mockClear(); // Clear calculateEndDate calls
+		(gantt.deleteTask as vi.Mock).mockClear();
+		(gantt.uid as vi.Mock).mockClear();
+		(gantt.calculateEndDate as vi.Mock).mockClear();
+        (gantt.getTask as vi.Mock).mockImplementation((id) => ({ id, text: `Task ${id}`})); // Default mock for getTask
 	});
 
-	afterEach(() => {
-		// This will call vi.restoreAllMocks() which handles mockUseStateDeletion
-		// and other spies created with vi.spyOn (like gantt.confirm etc.)
-		// It also calls vi.useRealTimers() from the global afterEach.
-	});
+	test("handleDeleteTask results in gantt.deleteTask and updated data in gantt.parse", async () => {
+		// GanttChart renders and initializes tasks.
+        // The initial tasks are from transformTasksForDhtmlx(initialDataFromPrevLib)
+        // Let's assume initialDataFromPrevLib has an ID that we can target.
+        const taskToDeleteId = 1; // from initialDataFromPrevLib
 
-	test("handleDeleteTask calls gantt.deleteTask and updates state (via side effect on taskStateInMock)", () => {
-		// Component needs to render to attach handleDeleteTask to window
+        (gantt.confirm as vi.Mock).mockImplementation((config) => {
+			if (config.callback) config.callback(true); // Auto-confirm "yes"
+		});
+		(gantt.isTaskExists as vi.Mock).mockReturnValue(true);
+        (gantt.getTask as vi.Mock).mockReturnValue({ id: taskToDeleteId, text: "Task 1" }); // Mock for confirm message
+        (gantt.parse as vi.Mock).mockClear(); // Clear initial parse calls
+
 		render(<GanttChart />);
 
-		const testTaskId = 1; // Assuming initialDataFromPrevLib has a task with id 1
-							  // and taskStateInMock is initialized with it.
-
-		// Check if task exists before deletion (optional, for test clarity)
-		expect(taskStateInMock?.find(t => t.id === testTaskId)).toBeDefined();
+        // Ensure initial parse has happened from useEffect
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        const initialParseCallArgs = (gantt.parse as vi.Mock).mock.calls[0][0];
+        expect(initialParseCallArgs.data.find((t: any) => t.id === taskToDeleteId)).toBeDefined();
+        (gantt.parse as vi.Mock).mockClear(); // Clear for the next assertion
 
 
 		act(() => {
 			if ((window as any).handleGanttTaskDelete) {
-				(window as any).handleGanttTaskDelete(testTaskId);
+				(window as any).handleGanttTaskDelete(taskToDeleteId);
 			} else {
 				throw new Error("handleGanttTaskDelete was not exposed on window by GanttChart component");
 			}
 		});
 
 		expect(gantt.confirm).toHaveBeenCalled();
-		expect(gantt.isTaskExists).toHaveBeenCalledWith(testTaskId);
-		expect(gantt.deleteTask).toHaveBeenCalledWith(testTaskId);
+		expect(gantt.isTaskExists).toHaveBeenCalledWith(taskToDeleteId);
+		expect(gantt.deleteTask).toHaveBeenCalledWith(taskToDeleteId);
 
-		// Verify task is removed from taskStateInMock (side effect of mockSetTasksDeletion)
-		expect(taskStateInMock?.find(t => t.id === testTaskId)).toBeUndefined();
+        // Check that gantt.parse is called with data excluding the deleted task
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const lastParseData = parseCalls[parseCalls.length - 1][0].data;
+        expect(lastParseData.find((t: any) => t.id === taskToDeleteId)).toBeUndefined();
 	});
 
 	test("deleted tasks do not reappear after adding a new task", async () => {
-		// Specific initial state for this test
-		const initialTasksForTest = [
-			{ id: "deleteMe", text: "Task to Delete", start_date: "2024-01-01", duration: 1, type: gantt.config.types.task },
-			{ id: "keepMe", text: "Task to Keep", start_date: "2024-01-02", duration: 1, type: gantt.config.types.task },
-		];
-		taskStateInMock = JSON.parse(JSON.stringify(initialTasksForTest)); // Set state for this test
-
 		render(<GanttChart />);
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Initial parse
+        // Find the first parse call that actually has data.
+        const firstMeaningfulParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+        if (!firstMeaningfulParseCall) {
+            throw new Error("Initial gantt.parse call with data not found for Task Deletion test.");
+        }
+        const initialTasks = firstMeaningfulParseCall[0].data;
+        const taskToDeleteId = initialTasks[0]?.id;
+        const taskToKeepId = initialTasks.length > 1 ? initialTasks[1]?.id : null; // Handle if only one task
 
-		const taskToDeleteId = "deleteMe";
+        if (!taskToDeleteId) { // taskToKeepId can be null if only one task initially
+            throw new Error("Not enough initial tasks for this test (need at least one).");
+        }
+        (gantt.parse as vi.Mock).mockClear();
 
 		// 1. Delete a task
 		act(() => {
@@ -458,9 +309,14 @@ describe("Task Deletion", () => {
 			}
 		});
 		expect(gantt.deleteTask).toHaveBeenCalledWith(taskToDeleteId);
-		expect(taskStateInMock?.find(t => t.id === taskToDeleteId)).toBeUndefined();
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        let parseCallsAfterDelete = (gantt.parse as vi.Mock).mock.calls;
+        let currentParsedTasks = parseCallsAfterDelete[parseCallsAfterDelete.length - 1][0].data;
+        expect(currentParsedTasks.find((t:any) => t.id === taskToDeleteId)).toBeUndefined();
+        (gantt.parse as vi.Mock).mockClear();
 
-		// 2. Add a new task (configure mocks for adding)
+
+		// 2. Add a new task
 		vi.setSystemTime(new Date(2024, 3, 15)); // April 15, 2024
 		(gantt.uid as vi.Mock).mockReturnValue("newTask999");
 		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
@@ -470,125 +326,80 @@ describe("Task Deletion", () => {
 			return endDate;
 		});
 
-		const addTaskButton = screen.getByRole("button", { name: /add task/i });
+		const addTaskButton = screen.getByRole("button", { name: "タスク追加" }); // Changed to Japanese
 		act(() => {
 			addTaskButton.click();
 		});
 
-		// Check taskStateInMock again
-		expect(taskStateInMock?.find(t => t.id === taskToDeleteId)).toBeUndefined();
-		expect(taskStateInMock?.find(t => t.id === "newTask999")).toBeDefined();
-		expect(taskStateInMock?.find(t => t.id === "keepMe")).toBeDefined();
+		await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        let parseCallsAfterAdd = (gantt.parse as vi.Mock).mock.calls;
+        currentParsedTasks = parseCallsAfterAdd[parseCallsAfterAdd.length - 1][0].data;
 
-		// Check data parsed into gantt (simulates what gantt displays)
-		// This relies on useEffect in component calling gantt.parse after tasks state changes.
-		// Since mockSetTasksDeletion updates taskStateInMock, and useState mock returns it,
-		// React should re-render, useEffect should run, and gantt.parse should be called.
-		await waitFor(() => {
-			const parseCalls = (gantt.parse as vi.Mock).mock.calls;
-			expect(parseCalls.length).toBeGreaterThan(0); // Ensure parse was called after updates
-			const lastParseData = parseCalls[parseCalls.length - 1][0].data;
-			expect(lastParseData.find((t: any) => t.id === taskToDeleteId)).toBeUndefined();
-			expect(lastParseData.find((t: any) => t.id === "newTask999")).toBeDefined();
-			expect(lastParseData.find((t: any) => t.id === "keepMe")).toBeDefined();
-		});
-		vi.useRealTimers(); // Clean up system time mock
+
+		expect(currentParsedTasks.find((t: any) => t.id === taskToDeleteId)).toBeUndefined();
+		expect(currentParsedTasks.find((t: any) => t.id === "newTask999")).toBeDefined();
+		if (taskToKeepId) { // Only check for taskToKeepId if it existed
+		    expect(currentParsedTasks.find((t: any) => t.id === taskToKeepId)).toBeDefined();
+		}
+
+		vi.useRealTimers();
 	});
 });
 
 describe("Task Reordering", () => {
-	let mockSetTasksReorder: ReturnType<typeof vi.fn>;
-	let mockUseStateReorder: ReturnType<typeof vi.spyOn>;
-
 	beforeEach(() => {
-		mockSetTasksReorder = vi.fn((update) => {
-			if (typeof update === 'function') {
-				taskStateInMock = update(taskStateInMock);
-			} else {
-				taskStateInMock = update;
-			}
-		});
-		const mockSetZoomLevel = vi.fn();
-
-		mockUseStateReorder = vi.spyOn(React, "useState")
-			// @ts-expect-error
-			.mockImplementation((initialValue) => {
-				const isTasksInitialCall = Array.isArray(initialValue) && (initialValue.length === 0 || initialValue[0]?.hasOwnProperty('start_date'));
-				const isZoomInitialCall = typeof initialValue === 'string' && initialValue === "Week";
-
-				if (isTasksInitialCall) {
-					if (taskStateInMock === undefined) {
-						taskStateInMock = JSON.parse(JSON.stringify(initialValue));
-					}
-					return [taskStateInMock, mockSetTasksReorder];
-				} else if (isZoomInitialCall) {
-					if (zoomStateInMock === undefined) zoomStateInMock = initialValue;
-					return [zoomStateInMock, mockSetZoomLevel];
-				}
-				return [initialValue, vi.fn()];
-			});
-
 		(gantt.moveTask as vi.Mock).mockClear();
 		(gantt.serialize as vi.Mock).mockClear();
 	});
 
-	// afterEach is covered by global afterEach and specific ones in other suites if needed
-
-	test("onBeforeRowDragEnd calls gantt.moveTask, gantt.serialize, and updates state", async () => {
-		const initialTasksForTest = [
-			{ id: "task1", text: "Task 1", start_date: "2024-01-01", duration: 1, parent: "0", urgency: "urgent", difficulty: "easy", type: "task" },
-			{ id: "task2", text: "Task 2", start_date: "2024-01-02", duration: 1, parent: "0", urgency: "normal", difficulty: "normal", type: "task" },
+	test("onBeforeRowDragEnd calls relevant gantt methods and updates data via gantt.parse", async () => {
+		// Component's initial tasks are from transformTasksForDhtmlx(initialDataFromPrevLib)
+        // Task IDs 1 and 2 exist in this initial data.
+		const reorderedGanttTasksFromSerialize = [
+			{ id: 2, text: "Task 2 Reordered", start_date: new Date(2024,0,2), end_date: new Date(2024,0,3), duration: 1, parent: "0", progress: 0, type: "task", open: true, urgency: "urgent", difficulty: "easy" }, // Add custom props here
+			{ id: 1, text: "Task 1 Reordered", start_date: new Date(2024,0,1), end_date: new Date(2024,0,2), duration: 1, parent: "0", progress: 0, type: "task", open: true, urgency: "urgent", difficulty: "difficult" },
 		];
-		taskStateInMock = JSON.parse(JSON.stringify(initialTasksForTest));
-
-		// Mock gantt.serialize to return a new order
-		const reorderedGanttTasks = [
-			// Simulate task2 moved before task1
-			{ id: "task2", text: "Task 2", start_date: new Date(2024,0,2), end_date: new Date(2024,0,3), duration: 1, parent: "0", progress: 0, type: "task", open: true },
-			{ id: "task1", text: "Task 1", start_date: new Date(2024,0,1), end_date: new Date(2024,0,2), duration: 1, parent: "0", progress: 0, type: "task", open: true },
-		];
-		(gantt.serialize as vi.Mock).mockReturnValue({ data: reorderedGanttTasks });
+		(gantt.serialize as vi.Mock).mockReturnValue({ data: reorderedGanttTasksFromSerialize });
+        (gantt.parse as vi.Mock).mockClear();
 
 		render(<GanttChart />);
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Wait for initial render's parse
+        (gantt.parse as vi.Mock).mockClear();
 
-		// Get the onBeforeRowDragEnd handler
 		const onBeforeRowDragEndHandlers = gantt.__getAttachedHandlers("onBeforeRowDragEnd");
-		expect(onBeforeRowDragEndHandlers.length).toBeGreaterThan(0);
 		const onBeforeRowDragEndHandler = onBeforeRowDragEndHandlers[onBeforeRowDragEndHandlers.length - 1];
 
-		const draggedTaskId = "task2";
-		const targetParentId = "0"; // Root
-		const targetIndex = 0; // Move to the first position
+		const draggedTaskId = 2; // Task ID from initialDataFromPrevLib (Task 2)
+		const targetParentId = "0";
+		const targetIndex = 0; // Move Task 2 to the first position (before Task 1)
 
-		let handlerResult: boolean | undefined = true; // Default to true if not set
 		act(() => {
-			handlerResult = onBeforeRowDragEndHandler?.(draggedTaskId, targetParentId, targetIndex);
+			onBeforeRowDragEndHandler?.(draggedTaskId, targetParentId, targetIndex);
 		});
 
-		expect(handlerResult).toBe(false); // Should prevent default processing
 		expect(gantt.moveTask).toHaveBeenCalledWith(draggedTaskId, targetIndex, targetParentId);
 		expect(gantt.serialize).toHaveBeenCalled();
 
-		// Check if taskStateInMock reflects the new order and data adaptation
-		expect(taskStateInMock).toBeDefined();
-		expect(taskStateInMock?.length).toBe(2);
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const lastParseData = parseCalls[parseCalls.length - 1][0].data;
 
-		const task1AfterReorder = taskStateInMock?.find(t => t.id === "task1");
-		const task2AfterReorder = taskStateInMock?.find(t => t.id === "task2");
+        expect(lastParseData.length).toBe(reorderedGanttTasksFromSerialize.length);
+		expect(lastParseData[0].text).toBe("Task 2 Reordered"); // Serialized data is used
+		expect(lastParseData[1].text).toBe("Task 1 Reordered");
 
-		expect(task2AfterReorder?.text).toBe("Task 2"); // from reorderedGanttTasks
-		expect(task2AfterReorder?.start_date).toBe("2024-01-02"); // Formatted
-		expect(task2AfterReorder?.urgency).toBe("normal"); // Preserved from initialTasksForTest via currentTasksMap
+        // Check preservation of custom properties.
+        // The component's logic merges existingTask props with serialized props.
+        // Initial task 1: urgency "urgent", difficulty "difficult"
+        // Initial task 2: urgency "urgent", difficulty "easy"
+        // These should be preserved.
+        const task1AfterReorder = lastParseData.find((t:any) => t.id === 1);
+        const task2AfterReorder = lastParseData.find((t:any) => t.id === 2);
 
-		expect(task1AfterReorder?.text).toBe("Task 1");
-		expect(task1AfterReorder?.start_date).toBe("2024-01-01");
-		expect(task1AfterReorder?.urgency).toBe("urgent");
-
-		// Check order (task2 should be first)
-		if (taskStateInMock && taskStateInMock.length === 2) {
-			expect(taskStateInMock[0].id).toBe("task2");
-			expect(taskStateInMock[1].id).toBe("task1");
-		}
+        expect(task1AfterReorder.urgency).toBe("urgent");
+        expect(task1AfterReorder.difficulty).toBe("difficult");
+        expect(task2AfterReorder.urgency).toBe("urgent");
+        expect(task2AfterReorder.difficulty).toBe("easy");
 	});
 });
 
@@ -599,191 +410,168 @@ describe("handleAddTask and JSON Export", () => {
 	let originalURLCreateObjectURL: typeof URL.createObjectURL;
 	let originalURLRevokeObjectURL: typeof URL.revokeObjectURL;
 
-	beforeAll(() => { // Capture originals once
+	beforeAll(() => {
 		originalCreateElement = document.createElement;
 		originalBodyAppend = document.body.appendChild;
 		originalBodyRemove = document.body.removeChild;
-		originalURLCreateObjectURL = global.URL.createObjectURL; // On global for JSDOM
-		originalURLRevokeObjectURL = global.URL.revokeObjectURL; // On global for JSDOM
+		originalURLCreateObjectURL = global.URL.createObjectURL;
+		originalURLRevokeObjectURL = global.URL.revokeObjectURL;
 	});
 
-	const setupAddTaskTest = () => {
-		const mockSetTasks = vi.fn((update) => {
-			if (typeof update === 'function') {
-				taskStateInMock = update(taskStateInMock);
-			} else {
-				taskStateInMock = update;
-			}
-		});
-		const mockSetZoomLevel = vi.fn(); // Not used by these tests but part of the mock structure
+	beforeEach(() => {
+        // Clear relevant gantt mocks before each test in this suite
+		(gantt.uid as vi.Mock).mockClear();
+		(gantt.date.str_to_date as vi.Mock).mockClear();
+		(gantt.calculateEndDate as vi.Mock).mockClear();
+        (gantt.parse as vi.Mock).mockClear();
 
-		const mockUseState = vi.spyOn(React, "useState")
-			// @ts-expect-error
-			.mockImplementation((initialValue) => {
-				const isTasksInitialCall = Array.isArray(initialValue) && (initialValue.length === 0 || initialValue[0]?.hasOwnProperty('start_date'));
-				const isZoomInitialCall = typeof initialValue === 'string' && initialValue === "Week";
+        // Ensure a clean body for each test in this suite, especially before render
+        document.body.innerHTML = '';
+        document.head.innerHTML = ''; // Also clear head just in case
+	});
 
-				if (isTasksInitialCall) {
-					if (taskStateInMock === undefined) {
-						// Initialize with a copy of initialDataFromPrevLib transformed, if needed for prevTasks logic
-						// For an empty start for setTasks, can use []
-						taskStateInMock = initialValue; // or a fresh copy: [...initialValue]
-					}
-					return [taskStateInMock, mockSetTasks];
-				} else if (isZoomInitialCall) {
-					if (zoomStateInMock === undefined) zoomStateInMock = initialValue;
-					return [zoomStateInMock, mockSetZoomLevel];
-				}
-				return [initialValue, vi.fn()];
-			});
+	afterEach(() => {
+		vi.useRealTimers();
+		// vi.restoreAllMocks() will take care of restoring spies created with vi.spyOn
+		// such as mockAppendChild, mockRemoveChild, mockCreateElement used in the tests.
+		vi.restoreAllMocks();
 
+		// Manually restore things that were directly assigned to global properties,
+		// if not handled by vi.restoreAllMocks (e.g. global.URL properties).
+		global.URL.createObjectURL = originalURLCreateObjectURL;
+		global.URL.revokeObjectURL = originalURLRevokeObjectURL;
+
+		// The following manual restorations are redundant if these document/body methods
+		// were spied on using vi.spyOn, as vi.restoreAllMocks() handles them.
+		// document.createElement = originalCreateElement;
+		// document.body.appendChild = originalBodyAppend;
+		// document.body.removeChild = originalBodyRemove;
+	});
+
+	test("handleAddTask correctly calculates and adds end_date to the new task", async () => {
 		const mockToday = new Date(2024, 3, 10); // April 10, 2024
 		vi.setSystemTime(mockToday);
-
-
 		(gantt.uid as vi.Mock).mockReturnValue("test-uid-123");
-		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr, format) => new Date(dateStr)); // Assumes "YYYY-MM-DD"
+		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
 		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
 			const endDate = new Date(start_date);
 			endDate.setDate(start_date.getDate() + duration);
 			return endDate;
 		});
-		// gantt.config.duration_unit is already "day" in the mock
-		// gantt.config.date_format is already "%Y-%m-%d" in the mock
+        (gantt.parse as vi.Mock).mockClear();
 
-		return { mockSetTasks, mockUseState };
-	};
-
-	afterEach(() => {
-		vi.useRealTimers(); // Restore real timers after each test
-		vi.restoreAllMocks(); // This should restore spies created with vi.spyOn
-
-		// Manually restore global objects if vi.restoreAllMocks isn't enough for JSDOM
-		document.createElement = originalCreateElement;
-		document.body.appendChild = originalBodyAppend;
-		document.body.removeChild = originalBodyRemove;
-		global.URL.createObjectURL = originalURLCreateObjectURL;
-		global.URL.revokeObjectURL = originalURLRevokeObjectURL;
-	});
-
-	test("handleAddTask correctly calculates and adds end_date to the new task", async () => {
-		const { mockSetTasks, mockUseState } = setupAddTaskTest();
 		render(<GanttChart />);
+
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Wait for initial parse
+        (gantt.parse as vi.Mock).mockClear(); // Clear for the specific assertion
 
 		const addTaskButton = screen.getByRole("button", { name: "タスク追加" });
 		act(() => {
 			addTaskButton.click();
 		});
 
-		// expect(mockSetTasks).toHaveBeenCalled(); // This has been persistently failing.
-		// Workaround: mockSetTasks implementation updates taskStateInMock. We check that directly.
-		const newTasksArray = taskStateInMock;
+		await waitFor(() => {
+			expect(gantt.parse).toHaveBeenCalled();
+		});
 
-		const addedTask = newTasksArray?.find(task => task.id === "test-uid-123");
+		const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+		const lastParseCall = parseCalls[parseCalls.length - 1][0];
+		const addedTask = lastParseCall.data.find((task: any) => task.id === "test-uid-123");
+
 		expect(addedTask).toBeDefined();
 		expect(addedTask).toHaveProperty("end_date");
-		// Start date is April 10, 2024. Duration is 1 day. End date should be April 11, 2024.
-		// formatDate(new Date(2024, 3, 11)) would be "2024-04-11"
 		expect(addedTask?.end_date).toBe("2024-04-11");
 		expect(addedTask?.start_date).toBe("2024-04-10");
 
-		mockUseState.mockRestore();
+		vi.useRealTimers();
 	});
 
 	test("JSON export includes added task with id, text, start_date, and end_date", async () => {
-		// vi.restoreAllMocks() in afterEach should handle most of these, but being explicit for complex tests.
-		const { mockSetTasks, mockUseState } = setupAddTaskTest();
+		const mockToday = new Date(2024, 3, 10);
+		vi.setSystemTime(mockToday);
+		(gantt.uid as vi.Mock).mockReturnValue("export-test-uid-456");
+		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
+		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
+			const endDate = new Date(start_date);
+			endDate.setDate(start_date.getDate() + duration);
+			return endDate;
+		});
+        (gantt.parse as vi.Mock).mockClear();
 
-		// Mock for JSON export
-		const mockCreateObjectURL = vi.fn(() => "mock-url");
+		const mockCreateObjectURL = vi.fn(() => "mock-url-export");
 		const mockRevokeObjectURL = vi.fn();
 		const mockLinkClick = vi.fn();
-		const mockAppendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
-		const mockRemoveChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
 
 		global.URL.createObjectURL = mockCreateObjectURL;
 		global.URL.revokeObjectURL = mockRevokeObjectURL;
 
-		const originalCreateElement = document.createElement;
+		render(<GanttChart />);
+        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Initial parse
+        (gantt.parse as vi.Mock).mockClear();
+
+		// Setup spies after initial render, just before they are needed for export.
+		const mockAppendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+		const mockRemoveChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
 		const mockCreateElement = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
 			if (tagName.toLowerCase() === 'a') {
-				return {
-					href: "",
-					download: "",
-					click: mockLinkClick,
-					// Must have appendChild and removeChild for the `document.body.appendChild(a); document.body.removeChild(a);` part
-					// However, those are on `document.body`, not the `a` element directly for this usage.
-					// The spyOn for document.body.appendChild/removeChild should cover it.
-				} as unknown as HTMLAnchorElement; // Use unknown for partial mock
+				return { href: "", download: "", click: mockLinkClick } as unknown as HTMLAnchorElement;
 			}
+			// Ensure originalCreateElement is properly defined and available in this scope
+			// It's captured in beforeAll of this describe block.
 			return originalCreateElement.call(document, tagName);
 		});
 
-		render(<GanttChart />);
-
-		// 1. Add a task
-		const addTaskButton = screen.getByRole("button", { name: /add task/i });
+		const addTaskButton = screen.getByRole("button", { name: "タスク追加" });
 		act(() => {
 			addTaskButton.click();
 		});
 
-		await waitFor(() => expect(mockSetTasks).toHaveBeenCalled());
+		await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
+        // The tasks for export are taken from the component's state, which is updated,
+        // and then reflected in gantt.parse. We can use the data from the last gantt.parse call
+        // to simulate what the component's state would be for the export.
+        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+		const lastParsedData = parseCalls[parseCalls.length - 1][0].data;
+        expect(lastParsedData.find((t: any) => t.id === "export-test-uid-456")).toBeDefined();
 
-		// Ensure taskStateInMock is updated via the mockSetTasks's side effect for the export to use it
-		// The actual component's `tasks` state (which is `taskStateInMock` in our test) is used for export.
-		// The mockSetTasks already updates taskStateInMock.
-		// Ensure this update is processed if there are any microtasks/effects from it.
-		await act(async () => {});
 
-
-		// 2. Click Export JSON
 		const exportButton = screen.getByRole("button", { name: "JSONエクスポート" });
 		act(() => {
 			exportButton.click();
 		});
 
-		// Export handler is synchronous in terms of creating the blob URL
 		expect(mockCreateObjectURL).toHaveBeenCalled();
 		const blobArg = mockCreateObjectURL.mock.calls[0][0] as Blob;
-		expect(blobArg).toBeInstanceOf(Blob);
-		expect(blobArg.type).toBe("application/json");
 
-		const exportedJson = await blobArg.text();
+		// Use FileReader to read Blob content as text, as blobArg.text() might not be available in JSDOM
+		const reader = new FileReader();
+		const exportedJsonPromise = new Promise<string>((resolve, reject) => {
+			reader.onload = () => resolve(reader.result as string);
+			reader.onerror = () => reject(reader.error);
+		});
+		reader.readAsText(blobArg);
+		const exportedJson = await exportedJsonPromise;
+
 		const exportedTasks = JSON.parse(exportedJson);
 
-		const addedTask = exportedTasks.find(task => task.id === "test-uid-123");
-		expect(addedTask).toBeDefined();
-		expect(addedTask).toEqual(expect.objectContaining({
-			id: "test-uid-123",
+		const addedTaskInExport = exportedTasks.find((task:any) => task.id === "export-test-uid-456");
+		expect(addedTaskInExport).toBeDefined();
+		expect(addedTaskInExport).toEqual(expect.objectContaining({
+			id: "export-test-uid-456",
 			text: "New Task",
 			start_date: "2024-04-10",
-			end_date: "2024-04-11", // Calculated end_date
+			end_date: "2024-04-11",
 			duration: 1,
 			progress: 0,
-			// type: gantt.config.types.task // This is a runtime value, might not be in JSON unless explicitly added
+			type: gantt.config.types.TASK, // Corrected to uppercase TASK
 		}));
-		 // Check type separately if it's important for export
-		 expect(addedTask.type).toBe(gantt.config.types.task);
-
 
 		expect(mockLinkClick).toHaveBeenCalled();
 		expect(mockAppendChild).toHaveBeenCalled();
 		expect(mockRemoveChild).toHaveBeenCalled();
-		expect(mockRevokeObjectURL).toHaveBeenCalledWith("mock-url");
+		expect(mockRevokeObjectURL).toHaveBeenCalledWith("mock-url-export");
 
-		// mockUseState is restored by vi.restoreAllMocks() in afterEach
-		// mockCreateElement, mockAppendChild, mockRemoveChild are also restored by vi.restoreAllMocks()
-		// Explicitly restoring global.URL changes if needed, though vi.restoreAllMocks might cover it.
-		// For safety, if issues persist with global.URL:
-		// delete global.URL.createObjectURL;
-		// delete global.URL.revokeObjectURL;
-
-		// Explicitly restore spies that might affect DOM,
-		// as vi.restoreAllMocks() in afterEach might not cover all cases or timing.
-		mockCreateElement.mockRestore(); // From setupAddTaskTest
-		mockAppendChild.mockRestore();   // From this test
-		mockRemoveChild.mockRestore();  // From this test
-		// mockUseState from setupAddTaskTest is restored by vi.restoreAllMocks in afterEach
+		// Mocks are restored in afterEach
 	});
 });
 

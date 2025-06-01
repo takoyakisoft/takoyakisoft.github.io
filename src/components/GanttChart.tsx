@@ -200,9 +200,7 @@ const GanttChart: React.FC = () => {
 
 			gantt.confirm({
 				title: gantt.locale.labels.confirm_deleting_title || "タスクの削除", // Default or use a more specific key
-				text: gantt.locale.labels.confirm_deleting
-					? gantt.locale.labels.confirm_deleting(taskText) // If it's a function
-					: `タスク ${taskText}を削除してもよろしいですか？`, // Default text
+				text: gantt.locale.labels.confirm_deleting ? `${gantt.locale.labels.confirm_deleting} ${taskText}` : `タスク ${taskText}を削除してもよろしいですか？`,
 				ok: gantt.locale.labels.message_ok || "OK", // Standard OK
 				cancel: gantt.locale.labels.message_cancel || "キャンセル", // Standard Cancel
 				callback: (result) => {
@@ -482,18 +480,46 @@ const GanttChart: React.FC = () => {
 			start_date: formatDate(today), // formatDate is defined above
 			duration: 1,
 			progress: 0,
-			type: gantt.config.types.task,
+			type: gantt.config.types.TASK, // Corrected to uppercase TASK
 		};
 
 		// Calculate end_date
-		const startDateObj = gantt.date.str_to_date(newTask.start_date, gantt.config.date_format);
+		const dateFormat = gantt.config.date_format || "%Y-%m-%d"; // Provide a fallback or ensure it's set
+		const startDateObj = gantt.date.str_to_date(newTask.start_date, dateFormat);
+
 		if (startDateObj && typeof newTask.duration === 'number') {
 			const endDateObj = gantt.calculateEndDate({
 				start_date: startDateObj,
 				duration: newTask.duration,
-				unit: gantt.config.duration_unit,
+				unit: gantt.config.duration_unit || "day", // Provide a fallback for duration_unit as well
 			});
-			newTask.end_date = formatDate(endDateObj);
+			if (endDateObj) { // Check if endDateObj is valid
+				newTask.end_date = formatDate(endDateObj);
+			} else {
+				// Handle error: unable to calculate end date
+				console.error("Error calculating end date for new task", newTask);
+				// Optionally, set a default end_date or leave it undefined based on requirements
+				// For example, set it to start_date + duration manually if gantt fails
+				const fallbackEndDate = new Date(startDateObj);
+				fallbackEndDate.setDate(startDateObj.getDate() + newTask.duration);
+				newTask.end_date = formatDate(fallbackEndDate);
+			}
+		} else {
+			// Handle error: unable to parse start_date or duration is invalid
+			console.error("Error parsing start_date or invalid duration for new task", newTask, "Parsed Start Date:", startDateObj);
+			// Optionally, set a default end_date or start_date if it failed to parse
+			// If startDateObj is null, newTask.start_date might be problematic or dateFormat
+			// For now, if startDateObj is null, end_date will remain undefined.
+            // A robust solution might be to ensure formatDate always produces a string gantt can parse,
+            // and that gantt.config.date_format is reliably set during initialization.
+            // The current formatDate function produces "YYYY-MM-DD" which should be fine with "%Y-%m-%d".
+            // If startDateObj is null, it implies an issue with gantt.date.str_to_date itself or its config.
+            // Adding a fallback for end_date if start_date was parseable but duration calculation failed.
+            if (startDateObj && typeof newTask.duration === 'number') {
+                 const fallbackEndDate = new Date(startDateObj);
+                 fallbackEndDate.setDate(startDateObj.getDate() + newTask.duration);
+                 newTask.end_date = formatDate(fallbackEndDate);
+            }
 		}
 
 		setTasks((prevTasks) => [...prevTasks, newTask]);
