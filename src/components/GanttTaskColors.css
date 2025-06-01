@@ -1,82 +1,82 @@
 /* In a global CSS file or a new CSS file imported into GanttChart.tsx or main.tsx */
 .gantt_task_urgent_easy .gantt_task_line {
-  background-color: #FFB3BA; /* Light Pink/Red */
-  border-color: #FF8A94; /* Darker border for definition */
+	background-color: #ffb3ba; /* Light Pink/Red */
+	border-color: #ff8a94; /* Darker border for definition */
 }
 .gantt_task_urgent_easy .gantt_task_content {
-  color: #5C000E; /* Darker text for readability */
+	color: #5c000e; /* Darker text for readability */
 }
 
 .gantt_task_urgent_difficult .gantt_task_line {
-  background-color: #FF4D4D; /* Strong Red */
-  border-color: #CC0000;
+	background-color: #ff4d4d; /* Strong Red */
+	border-color: #cc0000;
 }
 .gantt_task_urgent_difficult .gantt_task_content {
-  color: #FFFFFF; /* White text for contrast */
+	color: #ffffff; /* White text for contrast */
 }
 
 .gantt_task_not_urgent_easy .gantt_task_line {
-  background-color: #BAFFC9; /* Light Green */
-  border-color: #8AFF99;
+	background-color: #baffc9; /* Light Green */
+	border-color: #8aff99;
 }
 .gantt_task_not_urgent_easy .gantt_task_content {
-  color: #003D0A;
+	color: #003d0a;
 }
 
 .gantt_task_not_urgent_difficult .gantt_task_line {
-  background-color: #FFFFBA; /* Light Yellow */
-  border-color: #FFFF8A;
+	background-color: #ffffba; /* Light Yellow */
+	border-color: #ffff8a;
 }
 .gantt_task_not_urgent_difficult .gantt_task_content {
-  color: #5C5C00;
+	color: #5c5c00;
 }
 
 /* Ensure progress bar still looks distinct and consistent */
 .gantt_task_line .gantt_task_progress {
-  background-color: #4CAF50; /* A general green for progress */
-  opacity: 0.6; /* Make it slightly transparent to blend yet stand out */
+	background-color: #4caf50; /* A general green for progress */
+	opacity: 0.6; /* Make it slightly transparent to blend yet stand out */
 }
 
 /* More specific progress bar styling if needed, per custom class */
 .gantt_task_urgent_easy .gantt_task_line .gantt_task_progress {
-  background-color: #C0392B; /* Darker red for progress on light red */
+	background-color: #c0392b; /* Darker red for progress on light red */
 }
 .gantt_task_urgent_difficult .gantt_task_line .gantt_task_progress {
-  background-color: #E74C3C; /* Slightly lighter red for progress on strong red */
+	background-color: #e74c3c; /* Slightly lighter red for progress on strong red */
 }
 .gantt_task_not_urgent_easy .gantt_task_line .gantt_task_progress {
-  background-color: #27AE60; /* Darker green for progress on light green */
+	background-color: #27ae60; /* Darker green for progress on light green */
 }
 .gantt_task_not_urgent_difficult .gantt_task_line .gantt_task_progress {
-  background-color: #F1C40F; /* Gold/Darker Yellow for progress on light yellow */
+	background-color: #f1c40f; /* Gold/Darker Yellow for progress on light yellow */
 }
 
 /* Default milestone color, if not overridden by urgency/difficulty (though milestones might not have these) */
 .gantt_milestone .gantt_task_line {
-    background-color: #656565; /* Default DHTMLXGantt milestone color */
-    border: 1px solid #333;
+	background-color: #656565; /* Default DHTMLXGantt milestone color */
+	border: 1px solid #333;
 }
 /* Ensure milestone class takes precedence or combines well if urgency/difficulty applied */
 .gantt_milestone.gantt_task_urgent_easy .gantt_task_line {
-    /* Specific style for urgent easy milestones, if applicable */
+	/* Specific style for urgent easy milestones, if applicable */
 }
 
 /* Selected task style */
 .gantt_selected .gantt_task_line {
-    box-shadow: 0 0 5px 2px #007bff; /* Blue glow for selected task */
+	box-shadow: 0 0 5px 2px #007bff; /* Blue glow for selected task */
 }
 
 /* Styles for timeline cell backgrounds */
 .gantt_holiday {
-  background-color: #fff0f0 !important; /* Light pink for holidays - important to override default cell color */
+	background-color: #fff0f0 !important; /* Light pink for holidays - important to override default cell color */
 }
 
 .gantt_weekend {
-  background-color: #f5f5f5 !important; /* Lighter grey for weekends - important to override */
+	background-color: #f5f5f5 !important; /* Lighter grey for weekends - important to override */
 }
 
 /* For holidays that fall on a weekend, to distinguish or combine styles if needed */
 .gantt_weekend_holiday {
-  background-color: #ffe8e8 !important; /* A slightly different shade for weekend holidays */
-  /* Example: could add a pattern or different border if desired */
+	background-color: #ffe8e8 !important; /* A slightly different shade for weekend holidays */
+	/* Example: could add a pattern or different border if desired */
 }

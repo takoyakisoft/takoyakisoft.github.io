@@ -1,29 +1,29 @@
 .toolPageContainer {
-  background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  max-width: 600px; /* Added max-width for tool pages */
-  margin: 0 auto; /* Center the container */
+	background-color: #ffffff;
+	padding: 1.5rem;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	max-width: 600px; /* Added max-width for tool pages */
+	margin: 0 auto; /* Center the container */
 }
 
 .backLinkContainer {
-  text-align: center;
-  margin-top: 1.5rem;
+	text-align: center;
+	margin-top: 1.5rem;
 }
 
 .backLink {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  color: #3498db;
-  text-decoration: none;
-  border: 1px solid #3498db;
-  border-radius: 4px;
-  transition: background-color 0.2s, color 0.2s;
+	display: inline-block;
+	padding: 0.5rem 1rem;
+	color: #3498db;
+	text-decoration: none;
+	border: 1px solid #3498db;
+	border-radius: 4px;
+	transition: background-color 0.2s, color 0.2s;
 }
 
 .backLink:hover {
-  background-color: #3498db;
-  color: white;
-  text-decoration: none;
+	background-color: #3498db;
+	color: white;
+	text-decoration: none;
 }
