@@ -21,13 +21,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: '20' # Or a version compatible with the project, 20 is a recent LTS
+      - name: Install dependencies
+        run: npm install
       - name: Build
-        run: |
-          bun install
-          bun run build
+        run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
