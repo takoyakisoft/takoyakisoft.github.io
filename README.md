@@ -10,6 +10,7 @@ React, TypeScript, Vite を使用して構築されています。
 
 - **BMI計算機**: 体重と身長からBMI（体格指数）を計算します。
 - **温度変換ツール**: 摂氏と華氏の温度を相互に変換します。
+- **ガントチャート**: プロジェクトのタスクスケジュールを視覚化します。 (Gantt Chart: Visualize project task schedules.)
 
 ## 使用技術
 
@@ -28,13 +29,13 @@ React, TypeScript, Vite を使用して構築されています。
 
 2.  **依存関係をインストールします:**
     ```bash
-    bun install
+    npm install
     ```
-    もし `typescript` や `tsc` に関するエラーが出る場合は、`bun install` を再度実行するか、グローバルに `typescript` がインストールされているか確認してください。
+    もし `typescript` や `tsc` に関するエラーが出る場合は、`npm install` を再度実行するか、プロジェクトの `devDependencies` に `typescript` が正しくリストされているか確認してください。
 
 3.  **開発サーバーを起動します:**
     ```bash
-    bun run dev
+    npm run dev
     ```
     開発サーバーが起動し、通常は `http://localhost:5173` (または利用可能なポート) でアプリケーションにアクセスできます。
 
@@ -43,11 +44,10 @@ React, TypeScript, Vite を使用して構築されています。
 プロダクション用にアプリケーションをビルドするには、以下のコマンドを実行します:
 
 ```bash
-bun run build
+npm run build
 ```
 
-このコマンドは `tsc -b && vite build` を実行し、TypeScriptの型チェックとViteによるビルドを行います。
-(注意: 環境によっては `package.json` の build スクリプトを `./node_modules/.bin/tsc -b && vite build` のようにローカルのtscを明示的に指す必要がある場合があります。)
+このコマンドは `vite build` を実行し、最適化された静的ファイルを生成します。
 
 ## 成果物
 
