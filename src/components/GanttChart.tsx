@@ -192,11 +192,44 @@ const GanttChart: React.FC = () => {
 		}
 	}, []);
 
+	// Task deletion handler
+	const handleDeleteTask = useCallback(
+		(taskId: string | number) => {
+			const task = gantt.getTask(taskId); // Get task details for the confirmation message
+			const taskText = task ? `"${task.text}" ` : `task #${taskId} `;
+
+			gantt.confirm({
+				title: gantt.locale.labels.confirm_deleting_title || "タスクの削除", // Default or use a more specific key
+				text: gantt.locale.labels.confirm_deleting
+					? gantt.locale.labels.confirm_deleting(taskText) // If it's a function
+					: `タスク ${taskText}を削除してもよろしいですか？`, // Default text
+				ok: gantt.locale.labels.message_ok || "OK", // Standard OK
+				cancel: gantt.locale.labels.message_cancel || "キャンセル", // Standard Cancel
+				callback: (result) => {
+					if (result) {
+						setTasks((prevTasks) => prevTasks.filter((taskItem) => taskItem.id !== taskId));
+						if (gantt.isTaskExists(taskId)) {
+							gantt.deleteTask(taskId);
+						}
+					}
+				},
+			});
+		},
+		[setTasks],
+	);
+
 	useEffect(() => {
 		if (!ganttContainerRef.current) return;
 
 		// Apply Japanese locale
 		gantt.i18n.setLocale("jp");
+
+		// Explicit Lightbox translations
+		gantt.locale.labels.icon_save = "保存";
+		gantt.locale.labels.icon_cancel = "キャンセル";
+		gantt.locale.labels.icon_delete = "削除";
+		gantt.locale.labels.section_description = "説明";
+		gantt.locale.labels.section_time = "期間";
 
 		// Basic configuration
 		gantt.config.date_format = "%Y-%m-%d";
@@ -302,6 +335,17 @@ const GanttChart: React.FC = () => {
 				width: 60,
 				resize: true,
 			},
+			{
+				name: "actions",
+				label: "Actions",
+				width: 44, // Width for a small icon button
+				align: "center",
+				template: (task: DhtmlxTask) => {
+					// Return an HTML string for the delete button
+					// Ensure taskId is correctly passed. task.id should be available.
+					return `<div class="gantt_delete_button" onclick="window.handleGanttTaskDelete?.('${task.id}')">🗑️</div>`;
+				},
+			},
 		];
 
 		// Assign types after gantt is available
@@ -325,59 +369,110 @@ const GanttChart: React.FC = () => {
 
 		const onBeforeRowDragEndId = gantt.attachEvent(
 			"onBeforeRowDragEnd",
-			(id, targetParentId, tindex) => {
-				const currentTasks = tasksRef.current;
-				const draggedTask = gantt.getTask(id);
+			(id, parent, tindex) => {
+				// id: ID of the dragged task
+				// parent: ID of the target parent task (root if undefined or matches gantt.config.root_id)
+				// tindex: Zero-based index within the target parent's children
 
-				// Only allow reordering if the task is dragged within its original parent
-				// For root tasks, draggedTask.parent is often 0 or a root_id. targetParentId would be the same.
-				if (String(draggedTask.parent) !== String(targetParentId)) {
-					// If parent changes, let dhtmlx-gantt handle it or disallow.
-					// For now, we only implement custom logic for same-parent reorder.
-					return true;
-				}
+				gantt.moveTask(id, tindex, parent);
 
-				const newTasks = [...currentTasks];
-				const sourceTaskIndex = newTasks.findIndex((t) => t.id === id);
+				// Update React state to reflect the new order
+				const serializedGantt = gantt.serialize(); // { data: DhtmlxTask[], links: Link[] }
+				const newOrderedGanttTasks = serializedGantt.data;
 
-				if (sourceTaskIndex === -1) {
-					return true; // Task not found in our state, should not happen
-				}
+				// Create a map of existing tasks for easy lookup and preserving custom props
+				const currentTasksMap = new Map(tasksRef.current.map(task => [task.id, task]));
 
-				// Remove the task from its original position
-				const [movedTask] = newTasks.splice(sourceTaskIndex, 1);
+				const adaptedTasks = newOrderedGanttTasks.map(ganttTask => {
+					const existingTask = currentTasksMap.get(ganttTask.id);
+					return {
+						...existingTask, // Preserve custom properties like urgency, difficulty
+						id: ganttTask.id,
+						text: ganttTask.text, // Gantt typically uses 'text'
+						start_date: formatDate(ganttTask.start_date as unknown as Date), // gantt.serialize returns Date objects
+						end_date: formatDate(ganttTask.end_date as unknown as Date), // gantt.serialize returns Date objects
+						duration: ganttTask.duration,
+						parent: ganttTask.parent, // parent ID from Gantt
+						progress: ganttTask.progress,
+						type: ganttTask.type, // type from Gantt
+						open: ganttTask.open !== undefined ? ganttTask.open : true, // preserve open state or default
+						// Ensure all DhtmlxTask fields are covered
+						urgency: existingTask?.urgency,
+						difficulty: existingTask?.difficulty,
+					};
+				});
 
-				// Determine actual target index in the newTasks array.
-				// This is the most complex part. tindex is the visual index among siblings.
-				// If all tasks are at root and newTasks is flat and sorted as displayed, tindex might be direct.
-				// For simplicity as a first pass, let's assume tindex is the target index in the overall `newTasks` array.
-				// This works if tasks are primarily at the root or displayed flatly.
-				// A more robust solution would reorder within a filtered list of siblings and then merge back.
-
-				// If the task is moved to the very end (tindex might be equal to currentTasks.length or siblings.length)
-				if (tindex >= newTasks.length) {
-					newTasks.push(movedTask);
-				} else {
-					newTasks.splice(tindex, 0, movedTask);
-				}
-
-				setTasks(newTasks);
-				return false; // Prevent default dhtmlx-gantt row drag processing
+				setTasks(adaptedTasks);
+				return false; // Prevent default processing
 			},
 		);
 
 		// Load data
 		gantt.parse({ data: getTypedTasks(tasks) });
 
+		const onAfterTaskDragId = gantt.attachEvent(
+			"onAfterTaskDrag",
+			(id, mode, e) => {
+				const task = gantt.getTask(id);
+				setTasks((prevTasks) =>
+					prevTasks.map((t) =>
+						t.id === id
+							? {
+									...t,
+									start_date: gantt.templates.format_date(task.start_date),
+									end_date: gantt.templates.format_date(task.end_date),
+									duration: task.duration,
+							  }
+							: t,
+					),
+				);
+				gantt.refreshTask(id); // Consider if needed after state update
+				return true;
+			},
+		);
+
+		const onLightboxSaveId = gantt.attachEvent(
+			"onLightboxSave",
+			(id, task, isNew) => {
+				setTasks((prevTasks) =>
+					prevTasks.map((t) =>
+						t.id === id
+							? {
+									...t,
+									text: task.text,
+									start_date: gantt.templates.format_date(task.start_date),
+									end_date: gantt.templates.format_date(task.end_date),
+									duration: task.duration,
+									progress: task.progress,
+									// parent: task.parent, // Parent updates might need more complex handling
+									type: task.type,
+									// Add any other fields that can be edited in the lightbox
+							  }
+							: t,
+					),
+				);
+				gantt.refreshTask(id); // Consider if needed
+				return true; // Important to return true to save changes
+			},
+		);
+
+		// Expose handleDeleteTask globally for the template button
+		(window as any).handleGanttTaskDelete = handleDeleteTask;
+
+
 		// Cleanup on unmount
 		return () => {
 			gantt.detachEvent(onBeforeRowDragEndId);
+			gantt.detachEvent(onAfterTaskDragId);
+			gantt.detachEvent(onLightboxSaveId);
+			// Clean up global function
+			delete (window as any).handleGanttTaskDelete;
 			gantt.clearAll();
 		};
-	}, [currentZoomLevelName, setZoomConfiguration, tasks]);
+	}, [currentZoomLevelName, setZoomConfiguration, tasks, handleDeleteTask]);
 
-	// Removed the useEffect that watches [tasks] as the main useEffect already covers it,
-	// and it was likely causing double parse/clearAll calls.
+	// Note: The comment about removing a duplicate useEffect that watched [tasks] might refer to an old state.
+	// The current main useEffect correctly includes `tasks` in its dependency array.
 
 	const handleAddTask = () => {
 		const today = new Date();
@@ -389,6 +484,18 @@ const GanttChart: React.FC = () => {
 			progress: 0,
 			type: gantt.config.types.task,
 		};
+
+		// Calculate end_date
+		const startDateObj = gantt.date.str_to_date(newTask.start_date, gantt.config.date_format);
+		if (startDateObj && typeof newTask.duration === 'number') {
+			const endDateObj = gantt.calculateEndDate({
+				start_date: startDateObj,
+				duration: newTask.duration,
+				unit: gantt.config.duration_unit,
+			});
+			newTask.end_date = formatDate(endDateObj);
+		}
+
 		setTasks((prevTasks) => [...prevTasks, newTask]);
 		// Ensure the lightbox opens for the new task.
 		// It's often better to do this after Gantt has processed the new task.
@@ -476,17 +583,17 @@ const GanttChart: React.FC = () => {
 
 	return (
 		<div className={styles.ganttContainerWrapper}>
-			<h2>Gantt Chart (dhtmlx-gantt)</h2>
+			<h2>ガントチャート</h2>
 			<div className={styles.controlsContainer}>
 				<button type="button" onClick={handleAddTask}>
-					Add Task
+					タスク追加
 				</button>
 				<button
 					type="button"
 					onClick={handleExportJson}
 					style={{ marginLeft: "10px" }}
 				>
-					Export JSON
+					JSONエクスポート
 				</button>
 				{/* File input styled as a button */}
 				<label
@@ -494,7 +601,7 @@ const GanttChart: React.FC = () => {
 					className={styles.buttonLikeLabel}
 					style={{ marginLeft: "10px" }}
 				>
-					Import JSON
+					JSONインポート
 				</label>
 				<input
 					type="file"
@@ -505,7 +612,7 @@ const GanttChart: React.FC = () => {
 				/>
 			</div>
 			<div className={styles.controlsContainer} style={{ marginTop: "10px" }}>
-				<span>Zoom: </span>
+				<span>ズーム: </span>
 				{zoomLevels.map((level) => (
 					<button
 						type="button"
@@ -518,7 +625,7 @@ const GanttChart: React.FC = () => {
 						}}
 						disabled={currentZoomLevelName === level.name}
 					>
-						{level.name}
+						{level.name === "Day" ? "日" : level.name === "Week" ? "週" : "月"}
 					</button>
 				))}
 			</div>
