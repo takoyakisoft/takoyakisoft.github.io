@@ -375,32 +375,37 @@ const GanttChart: React.FC = () => {
 				gantt.moveTask(id, tindex, parent);
 
 				// Update React state to reflect the new order
-				const serializedGantt = gantt.serialize(); // { data: DhtmlxTask[], links: Link[] }
-				const newOrderedGanttTasks = serializedGantt.data;
+				const serializedGanttData = gantt.serialize().data; // Tasks from Gantt's perspective after drag
+				const currentReactTasksMap = new Map(tasksRef.current.map(task => [task.id, task]));
 
-				// Create a map of existing tasks for easy lookup and preserving custom props
-				const currentTasksMap = new Map(tasksRef.current.map(task => [task.id, task]));
-
-				const adaptedTasks = newOrderedGanttTasks.map(ganttTask => {
-					const existingTask = currentTasksMap.get(ganttTask.id);
-					return {
-						...existingTask, // Preserve custom properties like urgency, difficulty
-						id: ganttTask.id,
-						text: ganttTask.text, // Gantt typically uses 'text'
-						start_date: formatDate(ganttTask.start_date as unknown as Date), // gantt.serialize returns Date objects
-						end_date: formatDate(ganttTask.end_date as unknown as Date), // gantt.serialize returns Date objects
-						duration: ganttTask.duration,
-						parent: ganttTask.parent, // parent ID from Gantt
-						progress: ganttTask.progress,
-						type: ganttTask.type, // type from Gantt
-						open: ganttTask.open !== undefined ? ganttTask.open : true, // preserve open state or default
-						// Ensure all DhtmlxTask fields are covered
-						urgency: existingTask?.urgency,
-						difficulty: existingTask?.difficulty,
-					};
-				});
-
-				setTasks(adaptedTasks);
+				const reorderedAndFilteredTasks = serializedGanttData
+					.filter(ganttTask => currentReactTasksMap.has(ganttTask.id)) // Only process tasks known to React
+					.map(ganttTask => {
+						const existingReactTask = currentReactTasksMap.get(ganttTask.id); // Should always exist due to filter
+						// Ensure existingReactTask is not undefined before spreading
+						if (!existingReactTask) {
+							// This case should ideally not be hit if currentReactTasksMap.has is true
+							// but as a safeguard:
+							console.error("GanttChart: existingReactTask is undefined in onBeforeRowDragEnd despite passing filter. Task ID:", ganttTask.id);
+							// Return a minimally valid task or skip, though this indicates a deeper issue.
+							// For now, let's assume existingReactTask is found.
+						}
+						return {
+							...(existingReactTask || {}), // Spread existing task (has custom props), provide empty object fallback
+							id: ganttTask.id,     // Ensure these are from Gantt's current state post-drag
+							text: ganttTask.text,
+							// Ensure start_date and end_date are Date objects before formatting
+							start_date: formatDate(new Date(ganttTask.start_date as any)),
+							end_date: formatDate(new Date(ganttTask.end_date as any)),
+							duration: ganttTask.duration,
+							parent: ganttTask.parent, // parent ID from Gantt
+							progress: ganttTask.progress,
+							type: ganttTask.type, // type from Gantt
+							open: ganttTask.open !== undefined ? ganttTask.open : true, // preserve open state or default
+							// Custom properties like urgency, difficulty are preserved from existingReactTask
+						};
+					});
+				setTasks(reorderedAndFilteredTasks);
 				return false; // Prevent default processing
 			},
 		);
@@ -454,6 +459,16 @@ const GanttChart: React.FC = () => {
 			},
 		);
 
+		const onBeforeTaskDeleteId = gantt.attachEvent("onBeforeTaskDelete", (id, task) => {
+			// Call the handleDeleteTask function directly.
+			// It's available in this scope due to useEffect's closure.
+			handleDeleteTask(id);
+
+			// Return false to prevent dhtmlx-gantt from proceeding with its own deletion process,
+			// as handleDeleteTask will handle it.
+			return false;
+		});
+
 		// Expose handleDeleteTask globally for the template button
 		(window as any).handleGanttTaskDelete = handleDeleteTask;
 
@@ -463,6 +478,7 @@ const GanttChart: React.FC = () => {
 			gantt.detachEvent(onBeforeRowDragEndId);
 			gantt.detachEvent(onAfterTaskDragId);
 			gantt.detachEvent(onLightboxSaveId);
+			gantt.detachEvent(onBeforeTaskDeleteId); // Add this line
 			// Clean up global function
 			delete (window as any).handleGanttTaskDelete;
 			gantt.clearAll();
@@ -485,7 +501,8 @@ const GanttChart: React.FC = () => {
 
 		// Calculate end_date
 		const dateFormat = gantt.config.date_format || "%Y-%m-%d"; // Provide a fallback or ensure it's set
-		const startDateObj = gantt.date.str_to_date(newTask.start_date, dateFormat);
+		const dateParts = newTask.start_date.split('-');
+		const startDateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
 
 		if (startDateObj && typeof newTask.duration === 'number') {
 			const endDateObj = gantt.calculateEndDate({
