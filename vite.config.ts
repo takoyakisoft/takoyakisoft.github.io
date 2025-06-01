@@ -8,7 +8,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: [
-        'dhtmlx-gantt/codebase/locale/locale_jp.js'
       ]
     }
   }
