@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Enable version updates for Bun dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-type: "all"
+    groups:
+      all:
+        patterns:
+          - "*"
+          
