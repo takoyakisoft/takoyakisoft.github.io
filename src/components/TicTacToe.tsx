@@ -55,9 +55,10 @@ const TicTacToe: React.FC = () => {
     setWinner(null);
   };
 
-  const renderSquare = (index: number) => {
+  const renderSquare = (index: number, key: string | number) => {
     return (
       <button
+        key={key}
         className={styles.square}
         onClick={() => handleClick(index)}
         disabled={!!winner || !!board[index]}
@@ -84,7 +85,10 @@ const TicTacToe: React.FC = () => {
             <div key={rowIndex} className={styles.boardRow}>
               {Array(3)
                 .fill(null)
-                .map((_, colIndex) => renderSquare(rowIndex * 3 + colIndex))}
+                .map((_, colIndex) => {
+                  const squareIndex = rowIndex * 3 + colIndex;
+                  return renderSquare(squareIndex, `square-${rowIndex}-${colIndex}`);
+                })}
             </div>
           ))}
       </div>
