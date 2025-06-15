@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 // src/components/__mocks__/dhtmlx-gantt.ts
 export const gantt = {
   templates: {

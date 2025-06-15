@@ -1,11 +1,10 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import React from "react";
 import "@testing-library/jest-dom"; // For extended DOM matchers
-import { vi } from 'vitest'; // Import vi for mocking
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Explicitly mock 'dhtmlx-gantt' with a factory that returns the mock structure
 vi.mock('dhtmlx-gantt', () => {
-  const actualMock = vi.importActual<typeof import('@/__mocks__/dhtmlx-gantt')>('@/__mocks__/dhtmlx-gantt');
+  const actualMock = vi.importActual<typeof import('../__mocks__/dhtmlx-gantt')>('../__mocks__/dhtmlx-gantt');
   return actualMock; // Re-export the entire mock module
   // If the mock only has a default export that contains the gantt object:
   // return { gantt: actualMock.default.gantt };
@@ -66,7 +65,7 @@ describe("GanttChart Component", () => {
 				}),
 			);
 			// More specific check on the structure of parsed data if needed
-			const parseCall = (gantt.parse as vi.Mock).mock.calls[0][0];
+			const parseCall = (gantt.parse as any).mock.calls[0][0];
 			expect(parseCall.data.length).toBeGreaterThan(0);
 			expect(parseCall.data[0]).toHaveProperty("id");
 			expect(parseCall.data[0]).toHaveProperty("text");
@@ -123,7 +122,7 @@ describe("GanttChart Component", () => {
 		render(<GanttChart />);
 		await waitFor(() => expect(gantt.init).toHaveBeenCalledTimes(1));
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Ensure initial parse has happened
-        const initialParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+		const initialParseCall = (gantt.parse as any).mock.calls.find((call: [any]) => call[0]?.data?.length > 0);
         if (!initialParseCall) {
             throw new Error("Initial gantt.parse call with data not found for onAfterTaskDrag test.");
         }
@@ -140,9 +139,9 @@ describe("GanttChart Component", () => {
 			end_date: new Date(2024, 0, 25),
 			duration: 10,
 		};
-		(gantt.getTask as vi.Mock).mockReturnValue(updatedTaskDataFromGantt);
+		(gantt.getTask as any).mockReturnValue(updatedTaskDataFromGantt);
         // Mock format_date to return easily verifiable strings
-        (gantt.templates.format_date as vi.Mock).mockImplementation((date: Date) => {
+        (gantt.templates.format_date as any).mockImplementation((date: Date) => {
             return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
         });
 
@@ -155,7 +154,7 @@ describe("GanttChart Component", () => {
 		});
 
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const parseCalls = (gantt.parse as any).mock.calls;
         const lastParseData = parseCalls[parseCalls.length - 1][0].data;
         const updatedTaskInParse = lastParseData.find((t:any) => t.id === testTaskId);
 
@@ -169,8 +168,8 @@ describe("GanttChart Component", () => {
 	test("updates task data via gantt.parse on onLightboxSave event", async () => {
 		render(<GanttChart />);
 		await waitFor(() => expect(gantt.init).toHaveBeenCalledTimes(1));
-        await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Ensure initial parse has happened
-        const initialParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+		await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Ensure initial parse has happened
+        const initialParseCall = (gantt.parse as any).mock.calls.find((call: { data: string | any[]; }[]) => call[0]?.data?.length > 0);
         if (!initialParseCall) {
             throw new Error("Initial gantt.parse call with data not found for onLightboxSave test.");
         }
@@ -189,7 +188,7 @@ describe("GanttChart Component", () => {
 			progress: 0.5,
 			type: "task", // Ensure type is included as component might use it
 		};
-        (gantt.templates.format_date as vi.Mock).mockImplementation((date: Date) => {
+        (gantt.templates.format_date as any).mockImplementation((date: Date) => {
             return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
         });
 
@@ -201,7 +200,7 @@ describe("GanttChart Component", () => {
 		});
 
 		await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const parseCalls = (gantt.parse as any).mock.calls;
         const lastParseData = parseCalls[parseCalls.length - 1][0].data;
         const updatedTaskInParse = lastParseData.find((t:any) => t.id === testTaskId);
 
@@ -232,14 +231,14 @@ describe("GanttChart Component", () => {
 
 describe("Task Deletion", () => {
 	beforeEach(() => {
-		(gantt.confirm as vi.Mock).mockImplementation((config) => {
+		(gantt.confirm as any).mockImplementation((config: { callback: (arg0: boolean) => void; }) => {
 			if (config.callback) config.callback(true); // Auto-confirm "yes"
 		});
-		(gantt.isTaskExists as vi.Mock).mockReturnValue(true);
-		(gantt.deleteTask as vi.Mock).mockClear();
-		(gantt.uid as vi.Mock).mockClear();
-		(gantt.calculateEndDate as vi.Mock).mockClear();
-        (gantt.getTask as vi.Mock).mockImplementation((id) => ({ id, text: `Task ${id}`})); // Default mock for getTask
+		(gantt.isTaskExists as any).mockReturnValue(true);
+		(gantt.deleteTask as any).mockClear();
+		(gantt.uid as any).mockClear();
+		(gantt.calculateEndDate as any).mockClear();
+        (gantt.getTask as any).mockImplementation((id: any) => ({ id, text: `Task ${id}`})); // Default mock for getTask
 	});
 
 	test("handleDeleteTask results in gantt.deleteTask and updated data in gantt.parse", async () => {
@@ -248,20 +247,20 @@ describe("Task Deletion", () => {
         // Let's assume initialDataFromPrevLib has an ID that we can target.
         const taskToDeleteId = 1; // from initialDataFromPrevLib
 
-        (gantt.confirm as vi.Mock).mockImplementation((config) => {
+        (gantt.confirm as any).mockImplementation((config: { callback: (arg0: boolean) => void; }) => {
 			if (config.callback) config.callback(true); // Auto-confirm "yes"
 		});
-		(gantt.isTaskExists as vi.Mock).mockReturnValue(true);
-        (gantt.getTask as vi.Mock).mockReturnValue({ id: taskToDeleteId, text: "Task 1" }); // Mock for confirm message
-        (gantt.parse as vi.Mock).mockClear(); // Clear initial parse calls
+		(gantt.isTaskExists as any).mockReturnValue(true);
+        (gantt.getTask as any).mockReturnValue({ id: taskToDeleteId, text: "Task 1" }); // Mock for confirm message
+        (gantt.parse as any).mockClear(); // Clear initial parse calls
 
 		render(<GanttChart />);
 
         // Ensure initial parse has happened from useEffect
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        const initialParseCallArgs = (gantt.parse as vi.Mock).mock.calls[0][0];
+        const initialParseCallArgs = (gantt.parse as any).mock.calls[0][0];
         expect(initialParseCallArgs.data.find((t: any) => t.id === taskToDeleteId)).toBeDefined();
-        (gantt.parse as vi.Mock).mockClear(); // Clear for the next assertion
+        (gantt.parse as any).mockClear(); // Clear for the next assertion
 
 
 		act(() => {
@@ -278,7 +277,7 @@ describe("Task Deletion", () => {
 
         // Check that gantt.parse is called with data excluding the deleted task
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const parseCalls = (gantt.parse as any).mock.calls;
         const lastParseData = parseCalls[parseCalls.length - 1][0].data;
         expect(lastParseData.find((t: any) => t.id === taskToDeleteId)).toBeUndefined();
 	});
@@ -287,7 +286,7 @@ describe("Task Deletion", () => {
 		render(<GanttChart />);
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Initial parse
         // Find the first parse call that actually has data.
-        const firstMeaningfulParseCall = (gantt.parse as vi.Mock).mock.calls.find(call => call[0]?.data?.length > 0);
+        const firstMeaningfulParseCall = (gantt.parse as any).mock.calls.find((call: { data: string | any[]; }[]) => call[0]?.data?.length > 0);
         if (!firstMeaningfulParseCall) {
             throw new Error("Initial gantt.parse call with data not found for Task Deletion test.");
         }
@@ -298,7 +297,7 @@ describe("Task Deletion", () => {
         if (!taskToDeleteId) { // taskToKeepId can be null if only one task initially
             throw new Error("Not enough initial tasks for this test (need at least one).");
         }
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 		// 1. Delete a task
 		act(() => {
@@ -310,17 +309,17 @@ describe("Task Deletion", () => {
 		});
 		expect(gantt.deleteTask).toHaveBeenCalledWith(taskToDeleteId);
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        let parseCallsAfterDelete = (gantt.parse as vi.Mock).mock.calls;
+        let parseCallsAfterDelete = (gantt.parse as any).mock.calls;
         let currentParsedTasks = parseCallsAfterDelete[parseCallsAfterDelete.length - 1][0].data;
         expect(currentParsedTasks.find((t:any) => t.id === taskToDeleteId)).toBeUndefined();
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 
 		// 2. Add a new task
 		vi.setSystemTime(new Date(2024, 3, 15)); // April 15, 2024
-		(gantt.uid as vi.Mock).mockReturnValue("newTask999");
-		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
-		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
+		(gantt.uid as any).mockReturnValue("newTask999");
+		(gantt.date.str_to_date as any).mockImplementation((dateStr: string | number | Date) => new Date(dateStr));
+		(gantt.calculateEndDate as any).mockImplementation(({ start_date, duration }: { start_date: Date; duration: number }) => {
 			const endDate = new Date(start_date);
 			endDate.setDate(start_date.getDate() + duration);
 			return endDate;
@@ -332,7 +331,7 @@ describe("Task Deletion", () => {
 		});
 
 		await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        let parseCallsAfterAdd = (gantt.parse as vi.Mock).mock.calls;
+        let parseCallsAfterAdd = (gantt.parse as any).mock.calls;
         currentParsedTasks = parseCallsAfterAdd[parseCallsAfterAdd.length - 1][0].data;
 
 
@@ -348,8 +347,8 @@ describe("Task Deletion", () => {
 
 describe("Task Reordering", () => {
 	beforeEach(() => {
-		(gantt.moveTask as vi.Mock).mockClear();
-		(gantt.serialize as vi.Mock).mockClear();
+		(gantt.moveTask as any).mockClear();
+		(gantt.serialize as any).mockClear();
 	});
 
 	test("onBeforeRowDragEnd calls relevant gantt methods and updates data via gantt.parse", async () => {
@@ -359,12 +358,12 @@ describe("Task Reordering", () => {
 			{ id: 2, text: "Task 2 Reordered", start_date: new Date(2024,0,2), end_date: new Date(2024,0,3), duration: 1, parent: "0", progress: 0, type: "task", open: true, urgency: "urgent", difficulty: "easy" }, // Add custom props here
 			{ id: 1, text: "Task 1 Reordered", start_date: new Date(2024,0,1), end_date: new Date(2024,0,2), duration: 1, parent: "0", progress: 0, type: "task", open: true, urgency: "urgent", difficulty: "difficult" },
 		];
-		(gantt.serialize as vi.Mock).mockReturnValue({ data: reorderedGanttTasksFromSerialize });
-        (gantt.parse as vi.Mock).mockClear();
+		(gantt.serialize as any).mockReturnValue({ data: reorderedGanttTasksFromSerialize });
+        (gantt.parse as any).mockClear();
 
 		render(<GanttChart />);
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Wait for initial render's parse
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 		const onBeforeRowDragEndHandlers = gantt.__getAttachedHandlers("onBeforeRowDragEnd");
 		const onBeforeRowDragEndHandler = onBeforeRowDragEndHandlers[onBeforeRowDragEndHandlers.length - 1];
@@ -381,7 +380,7 @@ describe("Task Reordering", () => {
 		expect(gantt.serialize).toHaveBeenCalled();
 
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled());
-        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const parseCalls = (gantt.parse as any).mock.calls;
         const lastParseData = parseCalls[parseCalls.length - 1][0].data;
 
         expect(lastParseData.length).toBe(reorderedGanttTasksFromSerialize.length);
@@ -420,10 +419,10 @@ describe("handleAddTask and JSON Export", () => {
 
 	beforeEach(() => {
         // Clear relevant gantt mocks before each test in this suite
-		(gantt.uid as vi.Mock).mockClear();
-		(gantt.date.str_to_date as vi.Mock).mockClear();
-		(gantt.calculateEndDate as vi.Mock).mockClear();
-        (gantt.parse as vi.Mock).mockClear();
+		(gantt.uid as any).mockClear();
+		(gantt.date.str_to_date as any).mockClear();
+		(gantt.calculateEndDate as any).mockClear();
+        (gantt.parse as any).mockClear();
 
         // Ensure a clean body for each test in this suite, especially before render
         document.body.innerHTML = '';
@@ -451,18 +450,18 @@ describe("handleAddTask and JSON Export", () => {
 	test("handleAddTask correctly calculates and adds end_date to the new task", async () => {
 		const mockToday = new Date(2024, 3, 10); // April 10, 2024
 		vi.setSystemTime(mockToday);
-		(gantt.uid as vi.Mock).mockReturnValue("test-uid-123");
-		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
+		(gantt.uid as any).mockReturnValue("test-uid-123");
+		(gantt.calculateEndDate as any).mockImplementation(({ start_date, duration }: { start_date: Date; duration: number }) => {
 			const endDate = new Date(start_date);
 			endDate.setDate(start_date.getDate() + duration);
 			return endDate;
 		});
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 		render(<GanttChart />);
 
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Wait for initial parse
-        (gantt.parse as vi.Mock).mockClear(); // Clear for the specific assertion
+        (gantt.parse as any).mockClear(); // Clear for the specific assertion
 
 		const addTaskButton = screen.getByRole("button", { name: "タスク追加" });
 		act(() => {
@@ -473,7 +472,7 @@ describe("handleAddTask and JSON Export", () => {
 			expect(gantt.parse).toHaveBeenCalled();
 		});
 
-		const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+		const parseCalls = (gantt.parse as any).mock.calls;
 		const lastParseCall = parseCalls[parseCalls.length - 1][0];
 		const addedTask = lastParseCall.data.find((task: any) => task.id === "test-uid-123");
 
@@ -488,14 +487,14 @@ describe("handleAddTask and JSON Export", () => {
 	test("JSON export includes added task with id, text, start_date, and end_date", async () => {
 		const mockToday = new Date(2024, 3, 10);
 		vi.setSystemTime(mockToday);
-		(gantt.uid as vi.Mock).mockReturnValue("export-test-uid-456");
-		(gantt.date.str_to_date as vi.Mock).mockImplementation((dateStr) => new Date(dateStr));
-		(gantt.calculateEndDate as vi.Mock).mockImplementation(({ start_date, duration }) => {
+		(gantt.uid as any).mockReturnValue("export-test-uid-456");
+		(gantt.date.str_to_date as any).mockImplementation((dateStr: string | number | Date) => new Date(dateStr));
+		(gantt.calculateEndDate as any).mockImplementation(({ start_date, duration }: { start_date: Date; duration: number }) => {
 			const endDate = new Date(start_date);
 			endDate.setDate(start_date.getDate() + duration);
 			return endDate;
 		});
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 		const mockCreateObjectURL = vi.fn(() => "mock-url-export");
 		const mockRevokeObjectURL = vi.fn();
@@ -506,11 +505,11 @@ describe("handleAddTask and JSON Export", () => {
 
 		render(<GanttChart />);
         await waitFor(() => expect(gantt.parse).toHaveBeenCalled()); // Initial parse
-        (gantt.parse as vi.Mock).mockClear();
+        (gantt.parse as any).mockClear();
 
 		// Setup spies after initial render, just before they are needed for export.
-		const mockAppendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
-		const mockRemoveChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+		const mockAppendChild = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+		const mockRemoveChild = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
 		const mockCreateElement = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
 			if (tagName.toLowerCase() === 'a') {
 				return { href: "", download: "", click: mockLinkClick } as unknown as HTMLAnchorElement;
@@ -529,7 +528,7 @@ describe("handleAddTask and JSON Export", () => {
         // The tasks for export are taken from the component's state, which is updated,
         // and then reflected in gantt.parse. We can use the data from the last gantt.parse call
         // to simulate what the component's state would be for the export.
-        const parseCalls = (gantt.parse as vi.Mock).mock.calls;
+        const parseCalls = (gantt.parse as any).mock.calls;
 		const lastParsedData = parseCalls[parseCalls.length - 1][0].data;
         expect(lastParsedData.find((t: any) => t.id === "export-test-uid-456")).toBeDefined();
 
@@ -540,7 +539,7 @@ describe("handleAddTask and JSON Export", () => {
 		});
 
 		expect(mockCreateObjectURL).toHaveBeenCalled();
-		const blobArg = mockCreateObjectURL.mock.calls[0][0] as Blob;
+		const blobArg = mockCreateObjectURL.mock.calls[0] as unknown as Blob;
 
 		// Use FileReader to read Blob content as text, as blobArg.text() might not be available in JSDOM
 		const reader = new FileReader();

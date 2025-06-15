@@ -1,7 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TicTacToe from './TicTacToe';
+import { describe, test, expect } from 'vitest';
 
 describe('TicTacToe Component', () => {
   // Helper function to get all square buttons
