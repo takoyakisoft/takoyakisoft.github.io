@@ -67,7 +67,7 @@ const TicTacToe: React.FC = () => {
     );
   };
 
-  let status;
+  let status: string;
   if (winner) {
     status = winner === 'Draw' ? "It's a draw!" : `Winner: ${winner}`;
   } else {

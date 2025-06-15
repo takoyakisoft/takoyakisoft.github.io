@@ -5,6 +5,13 @@ import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import "./GanttTaskColors.css"; // Import custom task color styles
 import styles from "./GanttChart.module.css";
 
+// windowオブジェクトにhandleGanttTaskDeleteを追加するための型定義
+declare global {
+	interface Window {
+		handleGanttTaskDelete?: (taskId: string | number) => void;
+	}
+}
+
 interface DhtmlxTask {
 	id: string | number;
 	text: string;
@@ -182,7 +189,7 @@ const GanttChart: React.FC = () => {
 	const setZoomConfiguration = useCallback((levelName: string) => {
 		const zoomConfig = zoomLevels.find((zl) => zl.name === levelName);
 		if (zoomConfig && gantt) {
-			gantt.config.scales = zoomConfig.scales;
+			gantt.config.scales = zoomConfig.scales as unknown as typeof gantt.config.scales;
 			gantt.config.min_column_width = zoomConfig.min_column_width;
 			if (ganttContainerRef.current && gantt && typeof gantt.render === 'function') {
 				// Check if gantt is initialized
@@ -261,7 +268,7 @@ const GanttChart: React.FC = () => {
 		};
 
 		// Task class template for custom styling
-		gantt.templates.task_class = (start, end, task: DhtmlxTask): string => {
+		gantt.templates.task_class = (start, end, task: any): string => {
 			let cssClass = "";
 			if (task.urgency === "urgent" && task.difficulty === "easy") {
 				cssClass = "gantt_task_urgent_easy";
@@ -338,7 +345,7 @@ const GanttChart: React.FC = () => {
 				label: "Actions",
 				width: 44, // Width for a small icon button
 				align: "center",
-				template: (task: DhtmlxTask) => {
+				template: (task: any) => {
 					// Return an HTML string for the delete button
 					// Ensure taskId is correctly passed. task.id should be available.
 					return `<div class="gantt_delete_button" onclick="window.handleGanttTaskDelete?.('${task.id}')">🗑️</div>`;
@@ -351,13 +358,11 @@ const GanttChart: React.FC = () => {
 		const getTypedTasks = (currentTasks: DhtmlxTask[]): DhtmlxTask[] => {
 			return currentTasks.map((task) => ({
 				...task,
-				// Ensure 'type' is correctly assigned for dhtmlx-gantt to recognize milestones/projects
-				// This logic assumes 'milestone-1' is always a milestone.
-				// A more robust way would be to include type in initialDataFromPrevLib and transform it.
+				// DhtmlxTaskのtypeはstring型なので、必ずstringに変換します
 				type:
 					task.id === "milestone-1"
-						? gantt.config.types.milestone
-						: gantt.config.types.task,
+						? String(gantt.config.types.milestone)
+						: String(gantt.config.types.task),
 			}));
 		};
 
@@ -379,8 +384,8 @@ const GanttChart: React.FC = () => {
 				const currentReactTasksMap = new Map(tasksRef.current.map(task => [task.id, task]));
 
 				const reorderedAndFilteredTasks = serializedGanttData
-					.filter(ganttTask => currentReactTasksMap.has(ganttTask.id)) // Only process tasks known to React
-					.map(ganttTask => {
+					.filter((ganttTask: { id: string | number; }) => currentReactTasksMap.has(ganttTask.id)) // Only process tasks known to React
+					.map((ganttTask: { id: string | number; text: any; start_date: string; end_date: string; duration: any; parent: any; progress: any; type: any; open: undefined; }) => {
 						const existingReactTask = currentReactTasksMap.get(ganttTask.id); // Should always exist due to filter
 						// Ensure existingReactTask is not undefined before spreading
 						if (!existingReactTask) {
@@ -395,8 +400,8 @@ const GanttChart: React.FC = () => {
 							id: ganttTask.id,     // Ensure these are from Gantt's current state post-drag
 							text: ganttTask.text,
 							// Ensure start_date and end_date are Date objects before formatting
-							start_date: formatDate(new Date(ganttTask.start_date as any)),
-							end_date: formatDate(new Date(ganttTask.end_date as any)),
+							start_date: formatDate(new Date(ganttTask.start_date as string)),
+							end_date: formatDate(new Date(ganttTask.end_date as string)),
 							duration: ganttTask.duration,
 							parent: ganttTask.parent, // parent ID from Gantt
 							progress: ganttTask.progress,
@@ -422,8 +427,8 @@ const GanttChart: React.FC = () => {
 						t.id === id
 							? {
 									...t,
-									start_date: gantt.templates.format_date(task.start_date),
-									end_date: gantt.templates.format_date(task.end_date),
+									start_date: gantt.templates.format_date(task.start_date|| new Date()),
+									end_date: gantt.templates.format_date(task.end_date|| new Date()),
 									duration: task.duration,
 							  }
 							: t,
@@ -443,13 +448,13 @@ const GanttChart: React.FC = () => {
 							? {
 									...t,
 									text: task.text,
-									start_date: gantt.templates.format_date(task.start_date),
-									end_date: gantt.templates.format_date(task.end_date),
+									start_date: gantt.templates.format_date(task.start_date|| new Date()),
+									end_date: gantt.templates.format_date(task.end_date|| new Date()),
 									duration: task.duration,
 									progress: task.progress,
 									// parent: task.parent, // Parent updates might need more complex handling
 									type: task.type,
-									// Add any other fields that can be edited in the lightbox
+									// Add unknown other fields that can be edited in the lightbox
 							  }
 							: t,
 					),
@@ -470,7 +475,7 @@ const GanttChart: React.FC = () => {
 		});
 
 		// Expose handleDeleteTask globally for the template button
-		(window as any).handleGanttTaskDelete = handleDeleteTask;
+		(window as Window).handleGanttTaskDelete = handleDeleteTask;
 
 
 		// Cleanup on unmount
@@ -480,7 +485,7 @@ const GanttChart: React.FC = () => {
 			gantt.detachEvent(onLightboxSaveId);
 			gantt.detachEvent(onBeforeTaskDeleteId); // Add this line
 			// Clean up global function
-			delete (window as any).handleGanttTaskDelete;
+			delete window.handleGanttTaskDelete;
 			gantt.clearAll();
 		};
 	}, [currentZoomLevelName, setZoomConfiguration, tasks, handleDeleteTask]);
@@ -496,7 +501,7 @@ const GanttChart: React.FC = () => {
 			start_date: formatDate(today), // formatDate is defined above
 			duration: 1,
 			progress: 0,
-			type: gantt.config.types.TASK, // Corrected to uppercase TASK
+			type: String(gantt.config.types.TASK), // string型に変換
 		};
 
 		// Calculate end_date
@@ -555,7 +560,7 @@ const GanttChart: React.FC = () => {
 
 	const handleExportJson = () => {
 		// For now, export tasks as they are in the state.
-		// Consider stripping any runtime properties added by dhtmlx-gantt if necessary for cleaner export.
+		// Consider stripping unknown runtime properties added by dhtmlx-gantt if necessary for cleaner export.
 		const jsonString = JSON.stringify(tasks, null, 2);
 		const blob = new Blob([jsonString], { type: "application/json" });
 		const url = URL.createObjectURL(blob);
