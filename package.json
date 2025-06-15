@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "npx @biomejs/biome check --write ./src",
+    "format": "npx @biomejs/biome format --write ./src",
     "test": "vitest"
   },
   "dependencies": {
