@@ -539,7 +539,7 @@ describe("handleAddTask and JSON Export", () => {
 		});
 
 		expect(mockCreateObjectURL).toHaveBeenCalled();
-		const blobArg = mockCreateObjectURL.mock.calls[0] as unknown as Blob;
+		const blobArg = mockCreateObjectURL.mock.calls[0][0] as Blob;
 
 		// Use FileReader to read Blob content as text, as blobArg.text() might not be available in JSDOM
 		const reader = new FileReader();
