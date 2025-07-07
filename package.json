@@ -11,24 +11,24 @@
     "test": "vitest"
   },
   "dependencies": {
-    "dhtmlx-gantt": "^9.0.11",
+    "dhtmlx-gantt": "^9.0.13",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.2"
+    "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.0.6",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.0.2",
+    "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.5.2",
-    "@vitest/ui": "^3.2.3",
-    "globals": "^16.2.0",
+    "@vitejs/plugin-react": "^4.6.0",
+    "@vitest/ui": "^3.2.4",
+    "globals": "^16.3.0",
     "jsdom": "^26.1.0",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5",
+    "vite": "^7.0.2",
     "vitest": "^3.1.4"
   }
 }
