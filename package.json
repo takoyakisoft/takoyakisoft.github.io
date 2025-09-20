@@ -11,7 +11,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "dhtmlx-gantt": "^9.0.14",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"
