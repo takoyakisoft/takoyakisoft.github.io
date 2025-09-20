@@ -189,9 +189,14 @@ const GanttChart: React.FC = () => {
 	const setZoomConfiguration = useCallback((levelName: string) => {
 		const zoomConfig = zoomLevels.find((zl) => zl.name === levelName);
 		if (zoomConfig && gantt) {
-			gantt.config.scales = zoomConfig.scales as unknown as typeof gantt.config.scales;
+			gantt.config.scales =
+				zoomConfig.scales as unknown as typeof gantt.config.scales;
 			gantt.config.min_column_width = zoomConfig.min_column_width;
-			if (ganttContainerRef.current && gantt && typeof gantt.render === 'function') {
+			if (
+				ganttContainerRef.current &&
+				gantt &&
+				typeof gantt.render === "function"
+			) {
 				// Check if gantt is initialized
 				gantt.render();
 			}
@@ -207,12 +212,16 @@ const GanttChart: React.FC = () => {
 
 			gantt.confirm({
 				title: gantt.locale.labels.confirm_deleting_title || "タスクの削除", // Default or use a more specific key
-				text: gantt.locale.labels.confirm_deleting ? `${gantt.locale.labels.confirm_deleting} ${taskText}` : `タスク ${taskText}を削除してもよろしいですか？`,
+				text: gantt.locale.labels.confirm_deleting
+					? `${gantt.locale.labels.confirm_deleting} ${taskText}`
+					: `タスク ${taskText}を削除してもよろしいですか？`,
 				ok: gantt.locale.labels.message_ok || "OK", // Standard OK
 				cancel: gantt.locale.labels.message_cancel || "キャンセル", // Standard Cancel
 				callback: (result) => {
 					if (result) {
-						setTasks((prevTasks) => prevTasks.filter((taskItem) => taskItem.id !== taskId));
+						setTasks((prevTasks) =>
+							prevTasks.filter((taskItem) => taskItem.id !== taskId),
+						);
 						if (gantt.isTaskExists(taskId)) {
 							gantt.deleteTask(taskId);
 						}
@@ -381,35 +390,56 @@ const GanttChart: React.FC = () => {
 
 				// Update React state to reflect the new order
 				const serializedGanttData = gantt.serialize().data; // Tasks from Gantt's perspective after drag
-				const currentReactTasksMap = new Map(tasksRef.current.map(task => [task.id, task]));
+				const currentReactTasksMap = new Map(
+					tasksRef.current.map((task) => [task.id, task]),
+				);
 
 				const reorderedAndFilteredTasks = serializedGanttData
-					.filter((ganttTask: { id: string | number; }) => currentReactTasksMap.has(ganttTask.id)) // Only process tasks known to React
-					.map((ganttTask: { id: string | number; text: any; start_date: string; end_date: string; duration: any; parent: any; progress: any; type: any; open: undefined; }) => {
-						const existingReactTask = currentReactTasksMap.get(ganttTask.id); // Should always exist due to filter
-						// Ensure existingReactTask is not undefined before spreading
-						if (!existingReactTask) {
-							// This case should ideally not be hit if currentReactTasksMap.has is true
-							// but as a safeguard:
-							console.error("GanttChart: existingReactTask is undefined in onBeforeRowDragEnd despite passing filter. Task ID:", ganttTask.id);
-							// Return a minimally valid task or skip, though this indicates a deeper issue.
-							// For now, let's assume existingReactTask is found.
-						}
-						return {
-							...(existingReactTask || {}), // Spread existing task (has custom props), provide empty object fallback
-							id: ganttTask.id,     // Ensure these are from Gantt's current state post-drag
-							text: ganttTask.text,
-							// Ensure start_date and end_date are Date objects before formatting
-							start_date: formatDate(new Date(ganttTask.start_date as string)),
-							end_date: formatDate(new Date(ganttTask.end_date as string)),
-							duration: ganttTask.duration,
-							parent: ganttTask.parent, // parent ID from Gantt
-							progress: ganttTask.progress,
-							type: ganttTask.type, // type from Gantt
-							open: ganttTask.open !== undefined ? ganttTask.open : true, // preserve open state or default
-							// Custom properties like urgency, difficulty are preserved from existingReactTask
-						};
-					});
+					.filter((ganttTask: { id: string | number }) =>
+						currentReactTasksMap.has(ganttTask.id),
+					) // Only process tasks known to React
+					.map(
+						(ganttTask: {
+							id: string | number;
+							text: any;
+							start_date: string;
+							end_date: string;
+							duration: any;
+							parent: any;
+							progress: any;
+							type: any;
+							open: undefined;
+						}) => {
+							const existingReactTask = currentReactTasksMap.get(ganttTask.id); // Should always exist due to filter
+							// Ensure existingReactTask is not undefined before spreading
+							if (!existingReactTask) {
+								// This case should ideally not be hit if currentReactTasksMap.has is true
+								// but as a safeguard:
+								console.error(
+									"GanttChart: existingReactTask is undefined in onBeforeRowDragEnd despite passing filter. Task ID:",
+									ganttTask.id,
+								);
+								// Return a minimally valid task or skip, though this indicates a deeper issue.
+								// For now, let's assume existingReactTask is found.
+							}
+							return {
+								...(existingReactTask || {}), // Spread existing task (has custom props), provide empty object fallback
+								id: ganttTask.id, // Ensure these are from Gantt's current state post-drag
+								text: ganttTask.text,
+								// Ensure start_date and end_date are Date objects before formatting
+								start_date: formatDate(
+									new Date(ganttTask.start_date as string),
+								),
+								end_date: formatDate(new Date(ganttTask.end_date as string)),
+								duration: ganttTask.duration,
+								parent: ganttTask.parent, // parent ID from Gantt
+								progress: ganttTask.progress,
+								type: ganttTask.type, // type from Gantt
+								open: ganttTask.open !== undefined ? ganttTask.open : true, // preserve open state or default
+								// Custom properties like urgency, difficulty are preserved from existingReactTask
+							};
+						},
+					);
 				setTasks(reorderedAndFilteredTasks);
 				return false; // Prevent default processing
 			},
@@ -427,10 +457,14 @@ const GanttChart: React.FC = () => {
 						t.id === id
 							? {
 									...t,
-									start_date: gantt.templates.format_date(task.start_date|| new Date()),
-									end_date: gantt.templates.format_date(task.end_date|| new Date()),
+									start_date: gantt.templates.format_date(
+										task.start_date || new Date(),
+									),
+									end_date: gantt.templates.format_date(
+										task.end_date || new Date(),
+									),
 									duration: task.duration,
-							  }
+								}
 							: t,
 					),
 				);
@@ -448,14 +482,18 @@ const GanttChart: React.FC = () => {
 							? {
 									...t,
 									text: task.text,
-									start_date: gantt.templates.format_date(task.start_date|| new Date()),
-									end_date: gantt.templates.format_date(task.end_date|| new Date()),
+									start_date: gantt.templates.format_date(
+										task.start_date || new Date(),
+									),
+									end_date: gantt.templates.format_date(
+										task.end_date || new Date(),
+									),
 									duration: task.duration,
 									progress: task.progress,
 									// parent: task.parent, // Parent updates might need more complex handling
 									type: task.type,
 									// Add unknown other fields that can be edited in the lightbox
-							  }
+								}
 							: t,
 					),
 				);
@@ -464,19 +502,21 @@ const GanttChart: React.FC = () => {
 			},
 		);
 
-		const onBeforeTaskDeleteId = gantt.attachEvent("onBeforeTaskDelete", (id, task) => {
-			// Call the handleDeleteTask function directly.
-			// It's available in this scope due to useEffect's closure.
-			handleDeleteTask(id);
+		const onBeforeTaskDeleteId = gantt.attachEvent(
+			"onBeforeTaskDelete",
+			(id, task) => {
+				// Call the handleDeleteTask function directly.
+				// It's available in this scope due to useEffect's closure.
+				handleDeleteTask(id);
 
-			// Return false to prevent dhtmlx-gantt from proceeding with its own deletion process,
-			// as handleDeleteTask will handle it.
-			return false;
-		});
+				// Return false to prevent dhtmlx-gantt from proceeding with its own deletion process,
+				// as handleDeleteTask will handle it.
+				return false;
+			},
+		);
 
 		// Expose handleDeleteTask globally for the template button
 		(window as Window).handleGanttTaskDelete = handleDeleteTask;
-
 
 		// Cleanup on unmount
 		return () => {
@@ -506,16 +546,21 @@ const GanttChart: React.FC = () => {
 
 		// Calculate end_date
 		const dateFormat = gantt.config.date_format || "%Y-%m-%d"; // Provide a fallback or ensure it's set
-		const dateParts = newTask.start_date.split('-');
-		const startDateObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+		const dateParts = newTask.start_date.split("-");
+		const startDateObj = new Date(
+			parseInt(dateParts[0]),
+			parseInt(dateParts[1]) - 1,
+			parseInt(dateParts[2]),
+		);
 
-		if (startDateObj && typeof newTask.duration === 'number') {
+		if (startDateObj && typeof newTask.duration === "number") {
 			const endDateObj = gantt.calculateEndDate({
 				start_date: startDateObj,
 				duration: newTask.duration,
 				unit: gantt.config.duration_unit || "day", // Provide a fallback for duration_unit as well
 			});
-			if (endDateObj) { // Check if endDateObj is valid
+			if (endDateObj) {
+				// Check if endDateObj is valid
 				newTask.end_date = formatDate(endDateObj);
 			} else {
 				// Handle error: unable to calculate end date
@@ -528,20 +573,25 @@ const GanttChart: React.FC = () => {
 			}
 		} else {
 			// Handle error: unable to parse start_date or duration is invalid
-			console.error("Error parsing start_date or invalid duration for new task", newTask, "Parsed Start Date:", startDateObj);
+			console.error(
+				"Error parsing start_date or invalid duration for new task",
+				newTask,
+				"Parsed Start Date:",
+				startDateObj,
+			);
 			// Optionally, set a default end_date or start_date if it failed to parse
 			// If startDateObj is null, newTask.start_date might be problematic or dateFormat
 			// For now, if startDateObj is null, end_date will remain undefined.
-            // A robust solution might be to ensure formatDate always produces a string gantt can parse,
-            // and that gantt.config.date_format is reliably set during initialization.
-            // The current formatDate function produces "YYYY-MM-DD" which should be fine with "%Y-%m-%d".
-            // If startDateObj is null, it implies an issue with gantt.date.str_to_date itself or its config.
-            // Adding a fallback for end_date if start_date was parseable but duration calculation failed.
-            if (startDateObj && typeof newTask.duration === 'number') {
-                 const fallbackEndDate = new Date(startDateObj);
-                 fallbackEndDate.setDate(startDateObj.getDate() + newTask.duration);
-                 newTask.end_date = formatDate(fallbackEndDate);
-            }
+			// A robust solution might be to ensure formatDate always produces a string gantt can parse,
+			// and that gantt.config.date_format is reliably set during initialization.
+			// The current formatDate function produces "YYYY-MM-DD" which should be fine with "%Y-%m-%d".
+			// If startDateObj is null, it implies an issue with gantt.date.str_to_date itself or its config.
+			// Adding a fallback for end_date if start_date was parseable but duration calculation failed.
+			if (startDateObj && typeof newTask.duration === "number") {
+				const fallbackEndDate = new Date(startDateObj);
+				fallbackEndDate.setDate(startDateObj.getDate() + newTask.duration);
+				newTask.end_date = formatDate(fallbackEndDate);
+			}
 		}
 
 		setTasks((prevTasks) => [...prevTasks, newTask]);

@@ -19,7 +19,9 @@
 	text-decoration: none;
 	border: 1px solid #3498db;
 	border-radius: 4px;
-	transition: background-color 0.2s, color 0.2s;
+	transition:
+		background-color 0.2s,
+		color 0.2s;
 }
 
 .backLink:hover {
