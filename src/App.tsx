@@ -1,10 +1,8 @@
 import { Link, NavLink, Route, Routes } from "react-router-dom";
 import styles from "./App.module.css";
 import BmiPage from "./pages/BmiPage";
-import GanttPage from "./pages/GanttPage";
 import HomePage from "./pages/HomePage";
 import TemperaturePage from "./pages/TemperaturePage";
-import TicTacToePage from "./pages/TicTacToePage";
 
 function App() {
 	return (
@@ -29,18 +27,6 @@ function App() {
 						>
 							温度変換ツール
 						</NavLink>
-						<NavLink
-							to="/gantt"
-							className={({ isActive }) => (isActive ? styles.active : "")}
-						>
-							ガントチャート
-						</NavLink>
-						<NavLink
-							to="/tic-tac-toe"
-							className={({ isActive }) => (isActive ? styles.active : "")}
-						>
-							〇×ゲーム
-						</NavLink>
 					</div>
 				</nav>
 			</header>
@@ -49,8 +35,6 @@ function App() {
 					<Route path="/" element={<HomePage />} />
 					<Route path="/bmi-calculator" element={<BmiPage />} />
 					<Route path="/temperature-converter" element={<TemperaturePage />} />
-					<Route path="/gantt" element={<GanttPage />} />
-					<Route path="/tic-tac-toe" element={<TicTacToePage />} />
 				</Routes>
 			</main>
 			<footer className={styles.appFooter}>
