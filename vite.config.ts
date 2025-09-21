@@ -5,11 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/',
   plugins: [react()],
-  optimizeDeps: {
-    include: [
-      'dhtmlx-gantt',
-    ],
-  },
   build: {
     rollupOptions: {
       external: [
