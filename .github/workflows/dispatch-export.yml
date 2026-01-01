@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'windows' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:${{ inputs.godot_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'linux' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:${{ inputs.godot_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'web' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:${{ inputs.godot_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'macos' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:${{ inputs.godot_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
