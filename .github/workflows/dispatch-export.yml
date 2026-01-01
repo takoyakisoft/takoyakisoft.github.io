@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'windows' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:4.5
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'linux' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:4.5
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'web' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:4.5
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.export_platform == 'macos' || github.event.inputs.export_platform == 'all' }}
     container:
-      image: barichello/godot-ci:4.5
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -173,7 +173,7 @@ jobs:
         run: |
           cd ${EXPORT_FOLDER}
           mkdir -v -p build/mac
-          godot -v --export-release "Mac OSX" ./build/mac/$EXPORT_NAME.zip
+          godot -v --export-release "macOS" ./build/mac/$EXPORT_NAME.zip
       - name: Upload Artifact
         uses: actions/upload-artifact@v1
         with:
