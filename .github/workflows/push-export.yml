@@ -4,6 +4,8 @@ on:
     branches:
       - main
       # - "feature/**"
+permissions:
+  contents: write
 env:
   GODOT_VERSION: 4.5
   EXPORT_NAME: godot-game-template
