@@ -5,7 +5,6 @@ var crit_chance := 0.05
 var duration := 0.2
 
 func _ready() -> void:
-	$CollisionShape2D.shape.radius = $CollisionShape2D.shape.radius
 	$AnimationPlayer.play("slash")
 	body_entered.connect(_on_body_entered)
 	await get_tree().create_timer(duration).timeout

@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 const FRICTION = 800.0
 const TOUCH_DEADZONE = 12.0
+const TARGET_RADIUS = 280.0
 
 var Bullet = preload("res://scenes/weapon/bullet.tscn")
 var SwordSlash = preload("res://scenes/weapon/sword_slash.tscn")
@@ -55,6 +56,8 @@ func _ready() -> void:
 	add_to_group("player")
 	$PickupArea.add_to_group("xp_pickup")
 	$PickupArea/CollisionShape2D.shape.radius = pickup_radius
+	$TargetArea.monitoring = true
+	$TargetArea/CollisionShape2D.shape.radius = TARGET_RADIUS
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
@@ -113,16 +116,18 @@ func process_weapons(delta: float) -> void:
 			relic_timers[relic_id] = timer
 
 func fire_pistol(stats: Dictionary) -> void:
-	var enemies = get_tree().get_nodes_in_group("enemy")
-	if enemies.is_empty():
+	var nearby = $TargetArea.get_overlapping_bodies()
+	if nearby.is_empty():
 		return
 	var nearest_enemy = null
 	var min_dist = INF
-	for enemy in enemies:
-		var dist = global_position.distance_to(enemy.global_position)
+	for body in nearby:
+		if not body.is_in_group("enemy"):
+			continue
+		var dist = global_position.distance_to(body.global_position)
 		if dist < min_dist:
 			min_dist = dist
-			nearest_enemy = enemy
+			nearest_enemy = body
 	if not nearest_enemy:
 		return
 

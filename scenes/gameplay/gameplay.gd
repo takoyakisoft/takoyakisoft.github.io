@@ -143,19 +143,19 @@ func spawn_item_drop(position: Vector2) -> void:
 	pickup_container.add_child(item)
 
 func apply_item_effect(item_type: String) -> void:
-	match item_type:
-		"wipe_enemies":
-			for enemy in get_tree().get_nodes_in_group("enemy"):
-				if enemy and not enemy.is_boss:
-					enemy.apply_damage(9999)
-		"collect_xp":
-			for gem in pickup_container.get_children():
-				if gem.has_method("_on_area_entered"):
-					player.gain_xp(gem.value)
-					gem.queue_free()
-		"currency":
-			currency += 50
-			save_currency()
+		match item_type:
+			"wipe_enemies":
+				for enemy in get_tree().get_nodes_in_group("enemy"):
+					if enemy and not enemy.is_boss:
+						enemy.apply_damage(9999)
+			"collect_xp":
+				for gem in get_tree().get_nodes_in_group("xp_gem"):
+					if is_instance_valid(gem):
+						player.gain_xp(gem.value)
+						gem.queue_free()
+			"currency":
+				currency += 50
+				save_currency()
 
 func spawn_damage_number(world_position: Vector2, amount: float, is_player: bool) -> void:
 	var dmg = DamageNumber.instantiate()
@@ -242,8 +242,8 @@ func format_stat_value(key: String, value: float) -> String:
 	if key in ["cooldown"]:
 		return "%.2fs" % value
 	if key in ["crit"]:
-		var percent = int(abs(value) * 100)
-		return ("%d%%" % percent) if value >= 0 else ("-%d%%" % percent)
+		var percent = int(value * 100)
+		return "%d%%" % percent
 	return "%s" % str(value)
 
 func _on_relic_option_pressed(button: Button) -> void:

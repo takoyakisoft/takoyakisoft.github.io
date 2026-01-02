@@ -11,6 +11,7 @@ func setup(new_value: int, new_color: Color) -> void:
 	sprite.modulate = gem_color
 
 func _ready() -> void:
+	add_to_group("xp_gem")
 	area_entered.connect(_on_area_entered)
 	$AnimationPlayer.play("float")
 
