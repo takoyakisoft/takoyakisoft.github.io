@@ -1,23 +1,47 @@
 extends Node
 
-@onready var sprite_2d: Sprite2D = $Sprite2D
+var Enemy = preload("res://scenes/enemy/enemy.tscn")
+var spawn_timer = 0.0
+var spawn_rate = 1.0
 
-var t = 0
+const SPAWN_RATE_DECREASE = 0.01
+const MIN_SPAWN_RATE = 0.2
+const SPAWN_OFFSET = 50.0
 
-func _ready() -> void:
-	var scene_data = GGT.get_current_scene_data()
-	print("GGT/Gameplay: scene params are ", scene_data.params)
-
-	sprite_2d.position = get_viewport().get_visible_rect().size / 2
-
-	if GGT.is_changing_scene(): # this will be false if starting the scene with "Run current scene" or F6 shortcut
-		await GGT.scene_transition_finished
-
-	print("GGT/Gameplay: scene transition animation finished")
-
+@onready var player = $Player
 
 func _process(delta):
-	var size = get_viewport().get_visible_rect().size
-	t += delta * 1.5
-	sprite_2d.position.x = size.x / 2.0 + 200.0 * sin(t * 0.8)
-	sprite_2d.position.y = size.y / 2.0 + 140.0 * sin(t)
+	spawn_timer += delta
+	if spawn_timer >= spawn_rate:
+		spawn_timer = 0
+		spawn_enemy()
+		# Increase difficulty over time
+		if spawn_rate > MIN_SPAWN_RATE:
+			spawn_rate -= SPAWN_RATE_DECREASE
+
+func spawn_enemy():
+	if not is_instance_valid(player):
+		return
+
+	var enemy = Enemy.instantiate()
+	var viewport_size = get_viewport().get_visible_rect().size
+	var spawn_pos = Vector2.ZERO
+	var center_pos = player.global_position
+
+	# Spawn at random edge relative to player/camera
+	# Calculate relative to camera top-left
+	var top_left = center_pos - viewport_size / 2
+
+	var side = randi() % 4
+	match side:
+		0: # Top
+			spawn_pos = Vector2(randf_range(0, viewport_size.x), -SPAWN_OFFSET) + top_left
+		1: # Bottom
+			spawn_pos = Vector2(randf_range(0, viewport_size.x), viewport_size.y + SPAWN_OFFSET) + top_left
+		2: # Left
+			spawn_pos = Vector2(-SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
+		3: # Right
+			spawn_pos = Vector2(viewport_size.x + SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
+
+	enemy.position = spawn_pos
+	add_child(enemy)
