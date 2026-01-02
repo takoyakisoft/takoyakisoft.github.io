@@ -67,18 +67,36 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
 
-[node name="PlayButton" type="Button" parent="MarginContainer/Control/VBoxContainer"]
+[node name="StrikerButton" type="Button" parent="MarginContainer/Control/VBoxContainer"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_bottom = NodePath("../GunnerButton")
+focus_next = NodePath("../GunnerButton")
+text = "STRIKER"
+
+[node name="GunnerButton" type="Button" parent="MarginContainer/Control/VBoxContainer"]
+custom_minimum_size = Vector2(200, 70)
+layout_mode = 2
+focus_neighbor_top = NodePath("../StrikerButton")
+focus_neighbor_bottom = NodePath("../BladeButton")
+focus_next = NodePath("../BladeButton")
+focus_previous = NodePath("../StrikerButton")
+text = "GUNNER"
+
+[node name="BladeButton" type="Button" parent="MarginContainer/Control/VBoxContainer"]
+custom_minimum_size = Vector2(200, 70)
+layout_mode = 2
+focus_neighbor_top = NodePath("../GunnerButton")
 focus_neighbor_bottom = NodePath("../ExitButton")
 focus_next = NodePath("../ExitButton")
-text = "START"
+focus_previous = NodePath("../GunnerButton")
+text = "BLADE"
 
 [node name="ExitButton" type="Button" parent="MarginContainer/Control/VBoxContainer"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-focus_neighbor_top = NodePath("../PlayButton")
-focus_previous = NodePath("../PlayButton")
+focus_neighbor_top = NodePath("../BladeButton")
+focus_previous = NodePath("../BladeButton")
 text = "EXIT"
 
 [node name="Version" type="VBoxContainer" parent="MarginContainer/Control"]
@@ -141,5 +159,7 @@ theme_type_variation = &"LabelSmall"
 theme_override_colors/font_color = Color(0.886275, 0.87451, 0.87451, 1)
 text = "Developer 3"
 
-[connection signal="pressed" from="MarginContainer/Control/VBoxContainer/PlayButton" to="." method="_on_PlayButton_pressed"]
+[connection signal="pressed" from="MarginContainer/Control/VBoxContainer/StrikerButton" to="." method="_on_StrikerButton_pressed"]
+[connection signal="pressed" from="MarginContainer/Control/VBoxContainer/GunnerButton" to="." method="_on_GunnerButton_pressed"]
+[connection signal="pressed" from="MarginContainer/Control/VBoxContainer/BladeButton" to="." method="_on_BladeButton_pressed"]
 [connection signal="pressed" from="MarginContainer/Control/VBoxContainer/ExitButton" to="." method="_on_ExitButton_pressed"]

@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=3 uid="uid://xp_gem"]
+
+[ext_resource type="Script" path="res://scenes/pickups/xp_gem.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dtwpm3uclaspj" path="res://assets/sprites/icon.png" id="2_icon"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_gem"]
+radius = 18.0
+
+[sub_resource type="Animation" id="Animation_float"]
+length = 1.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite2D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(0, -2), Vector2(0, 2), Vector2(0, -2)]
+}
+
+[node name="XpGem" type="Area2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_icon")
+scale = Vector2(0.35, 0.35)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_gem")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+animations = {
+"float": SubResource("Animation_float")
+}
