@@ -74,7 +74,8 @@ const RELICS := {
 		},
 		"per_level": {
 			"damage": 1.6,
-			"cooldown": -0.02,
+			"cooldown": - 0.03,
+			"bullets": 0.3,
 			"crit": 0.01,
 		},
 	},
@@ -90,8 +91,8 @@ const RELICS := {
 			"crit": 0.05,
 		},
 		"per_level": {
-			"damage": 2.2,
-			"cooldown": -0.03,
+			"damage": 5.0,
+			"cooldown": - 0.05,
 			"radius": 4.0,
 			"duration": 0.01,
 			"crit": 0.01,
@@ -150,7 +151,7 @@ const RELICS := {
 			"invincibility_duration": 2.5,
 		},
 		"per_level": {
-			"cooldown": -0.4,
+			"cooldown": - 0.4,
 			"invincibility_duration": 0.25,
 		},
 	},
@@ -220,9 +221,9 @@ static func get_wave_settings(wave: int) -> Dictionary:
 
 	if wave == 11:
 		settings.spawn_enabled = true
-		settings.spawn_rate = 999.0
-		settings.enemy_hp_multiplier = 6.0
-		settings.enemy_damage_multiplier = 3.0
+		settings.spawn_rate = 1.0
+		settings.enemy_hp_multiplier = 50.0
+		settings.enemy_damage_multiplier = 6.0
 		settings.enemy_speed_multiplier = 1.3
 		settings.boss = true
 		return settings
@@ -232,13 +233,21 @@ static func get_wave_settings(wave: int) -> Dictionary:
 	if wave >= 13:
 		settings.spawn_enabled = true
 		settings.spawn_rate = 0.35
-		settings.enemy_hp_multiplier = 4.0 + (wave - 13) * 0.4
-		settings.enemy_damage_multiplier = 3.0 + (wave - 13) * 0.3
+		settings.enemy_hp_multiplier = 8.0 + (wave - 13) * 0.8
+		settings.enemy_damage_multiplier = 6.0 + (wave - 13) * 0.6
 		settings.enemy_speed_multiplier = 1.4 + (wave - 13) * 0.05
 		return settings
 
-	settings.spawn_rate = max(0.8 - (wave - 1) * 0.05, 0.35)
-	settings.enemy_hp_multiplier = 1.0 + (wave - 1) * 0.25
+	if wave < 6:
+		settings.spawn_rate = max(0.8 - (wave - 1) * 0.05, 0.5)
+		settings.enemy_hp_multiplier = 1.0 + (wave - 1) * 0.25
+	else:
+		# Exponential ramp up from wave 6
+		# spawn_rate decreases (more enemies), HP increases aggressively
+		var expo = float(wave - 5)
+		settings.spawn_rate = max(0.5 * pow(0.85, expo), 0.05)
+		settings.enemy_hp_multiplier = 2.25 + pow(1.2, expo)
+		
 	settings.enemy_damage_multiplier = 1.0 + (wave - 1) * 0.15
 	settings.enemy_speed_multiplier = 1.0 + (wave - 1) * 0.02
 	return settings

@@ -38,6 +38,10 @@ enabled=PackedStringArray("res://addons/ggt-core/plugin.cfg", "res://addons/ggt-
 
 theme/custom="res://resources/theme/theme-main.tres"
 
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
 [input]
 
 ui_accept={

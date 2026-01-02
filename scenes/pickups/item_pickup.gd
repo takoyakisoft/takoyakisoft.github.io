@@ -4,14 +4,24 @@ var item_type := "currency"
 
 @onready var label := $Label
 
-func setup(new_type: String, label_text: String, color: Color) -> void:
+var label_text_val := ""
+var label_color_val := Color.WHITE
+
+func setup(new_type: String, text: String, color: Color) -> void:
 	item_type = new_type
-	label.text = label_text
-	label.modulate = color
+	label_text_val = text
+	label_color_val = color
+	if is_inside_tree():
+		label.text = label_text_val
+		label.modulate = label_color_val
 
 func _ready() -> void:
+	if label_text_val != "":
+		label.text = label_text_val
+		label.modulate = label_color_val
 	area_entered.connect(_on_area_entered)
-	$AnimationPlayer.play("float")
+	if $AnimationPlayer.has_animation("float"):
+		$AnimationPlayer.play("float")
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("xp_pickup"):

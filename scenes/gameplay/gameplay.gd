@@ -34,6 +34,7 @@ const ITEM_DROP_CHANCE := 0.08
 @onready var pickup_container := $PickupContainer
 
 func _ready() -> void:
+	$HUD.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("gameplay")
 	load_currency()
 	var scene_data = GGT.get_current_scene_data()
@@ -80,8 +81,7 @@ func update_wave_state(delta: float) -> void:
 func spawn_enemies(delta: float) -> void:
 	if not wave_settings.get("spawn_enabled", true):
 		return
-	if wave_settings.get("boss", false):
-		return
+
 
 	spawn_timer += delta
 	if spawn_timer >= spawn_rate:
@@ -136,7 +136,7 @@ func spawn_xp_gem(position: Vector2) -> void:
 	var gem = XpGem.instantiate()
 	gem.global_position = position
 	gem.setup(gem_data.value, gem_data.color)
-	pickup_container.add_child(gem)
+	pickup_container.call_deferred("add_child", gem)
 
 func spawn_item_drop(position: Vector2) -> void:
 	var keys = GameData.ITEM_TYPES.keys()
@@ -145,13 +145,13 @@ func spawn_item_drop(position: Vector2) -> void:
 	var item = ItemPickup.instantiate()
 	item.global_position = position
 	item.setup(item_key, data.name, data.color)
-	pickup_container.add_child(item)
+	pickup_container.call_deferred("add_child", item)
 
 func apply_item_effect(item_type: String) -> void:
 	match item_type:
 		"wipe_enemies":
 			for enemy in get_tree().get_nodes_in_group("enemy"):
-				if is_instance_valid(enemy) and not enemy.get("is_boss", false):
+				if is_instance_valid(enemy) and not enemy.get("is_boss"):
 					if enemy.has_method("apply_damage"):
 						enemy.apply_damage(9999)
 		"collect_xp":
@@ -217,10 +217,10 @@ func format_relic_choice(relic_id: String) -> String:
 	var relic = GameData.RELICS[relic_id]
 	var current_level = player.relics.get(relic_id, 0)
 	var next_level = min(current_level + 1, GameData.MAX_RELIC_LEVEL)
-	var name = relic.name
+	var relic_name = relic.name
 	var desc = relic.description
 	var per_level = relic.per_level
-	var lines = ["%s Lv%d→Lv%d" % [name, current_level, next_level], desc]
+	var lines = ["%s Lv%d→Lv%d" % [relic_name, current_level, next_level], desc]
 	var stats_line := []
 	for key in per_level.keys():
 		stats_line.append("%s %s" % [format_stat_key(key), format_stat_value(key, per_level[key])])
@@ -277,7 +277,7 @@ func apply_relic_choice(relic_id: String) -> void:
 
 func update_timer_label() -> void:
 	var total_seconds = int(time_elapsed)
-	var minutes = total_seconds / 60
+	var minutes = int(total_seconds / 60.0)
 	var seconds = total_seconds % 60
 	timer_label.text = "%02d:%02d" % [minutes, seconds]
 
