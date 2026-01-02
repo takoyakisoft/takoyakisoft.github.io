@@ -101,8 +101,8 @@ func process_weapons(delta: float) -> void:
 		var relic_type = relic.get("type")
 		if relic_type != "weapon" and relic_type != "active":
 			continue
-		var level = relics[relic_id]
-		var stats = GameData.get_relic_stats(relic_id, level)
+		var relic_level = relics[relic_id]
+		var stats = GameData.get_relic_stats(relic_id, relic_level)
 		var timer = relic_timers.get(relic_id, 0.0) + delta
 		if timer >= stats.get("cooldown", 1.0):
 			relic_timers[relic_id] = 0.0
@@ -146,9 +146,12 @@ func fire_sword(stats: Dictionary) -> void:
 	slash.damage = stats.get("damage", 10.0)
 	slash.duration = stats.get("duration", 0.2)
 	slash.crit_chance = stats.get("crit", 0.05)
-	var shape = slash.get_node("CollisionShape2D")
-	if shape and shape.shape:
-		shape.shape.radius = stats.get("radius", 70.0)
+	var collision_shape: CollisionShape2D = slash.get_node("CollisionShape2D")
+	if collision_shape:
+		var desired_radius = stats.get("radius", 70.0)
+		var circle_shape := CircleShape2D.new()
+		circle_shape.radius = desired_radius
+		collision_shape.shape = circle_shape
 	get_parent().add_child(slash)
 
 func add_relic(relic_id: String) -> void:
@@ -164,12 +167,12 @@ func add_relic(relic_id: String) -> void:
 
 func update_relic_stats() -> void:
 	pickup_radius = 30.0
-	base_speed = max(base_speed_base, 120.0)
+	base_speed = base_speed_base
 	shield_regen = 2.0
 	var bonus_hp = 0.0
 	for relic_id in relics.keys():
-		var level = relics[relic_id]
-		var stats = GameData.get_relic_stats(relic_id, level)
+		var relic_level = relics[relic_id]
+		var stats = GameData.get_relic_stats(relic_id, relic_level)
 		if stats.has("pickup_bonus"):
 			pickup_radius += 30.0 * stats["pickup_bonus"]
 		if stats.has("move_speed_bonus"):

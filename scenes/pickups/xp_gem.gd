@@ -18,6 +18,11 @@ func _ready() -> void:
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("xp_pickup"):
 		var player = area.get_parent()
-		if player and player.is_in_group("player"):
-			player.gain_xp(value)
-			queue_free()
+		if not player or not player.is_in_group("player"):
+			player = get_tree().get_first_node_in_group("player")
+		if not player:
+			return
+		if not player.has_method("gain_xp"):
+			return
+		player.gain_xp(value)
+		queue_free()

@@ -11,6 +11,7 @@ var time_elapsed := 0.0
 var wave_index := 1
 var wave_settings := {}
 var boss_spawned := false
+var boss_active := false
 var boss_timer := 0.0
 
 var relic_choice_ids: Array[String] = []
@@ -57,6 +58,12 @@ func _process(delta: float) -> void:
 	spawn_enemies(delta)
 
 func update_wave_state(delta: float) -> void:
+	if boss_active:
+		boss_timer += delta
+		if boss_timer >= 60.0:
+			on_player_defeated()
+		return
+
 	var new_wave = GameData.get_wave_index(time_elapsed)
 	if new_wave != wave_index:
 		wave_index = new_wave
@@ -65,13 +72,10 @@ func update_wave_state(delta: float) -> void:
 		boss_spawned = false
 		boss_timer = 0.0
 
-	if wave_index == 11:
-		if not boss_spawned:
-			spawn_boss()
-			boss_spawned = true
-		boss_timer += delta
-		if boss_timer >= 60.0:
-			on_player_defeated()
+	if wave_index == 11 and not boss_spawned:
+		spawn_boss()
+		boss_spawned = true
+		boss_active = true
 
 func spawn_enemies(delta: float) -> void:
 	if not wave_settings.get("spawn_enabled", true):
@@ -125,6 +129,7 @@ func on_enemy_defeated(position: Vector2, was_boss: bool) -> void:
 		spawn_item_drop(position)
 	if was_boss:
 		boss_timer = 0.0
+		boss_active = false
 
 func spawn_xp_gem(position: Vector2) -> void:
 	var gem_data = GameData.get_random_gem_type()
@@ -143,19 +148,20 @@ func spawn_item_drop(position: Vector2) -> void:
 	pickup_container.add_child(item)
 
 func apply_item_effect(item_type: String) -> void:
-		match item_type:
-			"wipe_enemies":
-				for enemy in get_tree().get_nodes_in_group("enemy"):
-					if enemy and not enemy.is_boss:
+	match item_type:
+		"wipe_enemies":
+			for enemy in get_tree().get_nodes_in_group("enemy"):
+				if is_instance_valid(enemy) and not enemy.get("is_boss", false):
+					if enemy.has_method("apply_damage"):
 						enemy.apply_damage(9999)
-			"collect_xp":
-				for gem in get_tree().get_nodes_in_group("xp_gem"):
-					if is_instance_valid(gem):
-						player.gain_xp(gem.value)
-						gem.queue_free()
-			"currency":
-				currency += 50
-				save_currency()
+		"collect_xp":
+			for gem in get_tree().get_nodes_in_group("xp_gem"):
+				if is_instance_valid(gem):
+					player.gain_xp(gem.value)
+					gem.queue_free()
+		"currency":
+			currency += 50
+			save_currency()
 
 func spawn_damage_number(world_position: Vector2, amount: float, is_player: bool) -> void:
 	var dmg = DamageNumber.instantiate()
@@ -199,7 +205,7 @@ func build_relic_choices() -> Array[String]:
 			break
 
 	if options.is_empty():
-		options = ["heal_full", "currency_bonus", "heal_full"]
+		options = ["heal_full", "currency_bonus"]
 	return options
 
 func format_relic_choice(relic_id: String) -> String:
@@ -285,5 +291,6 @@ func load_currency() -> void:
 
 func save_currency() -> void:
 	var config = ConfigFile.new()
+	config.load("user://save.cfg")
 	config.set_value("player", "currency", currency)
 	config.save("user://save.cfg")

@@ -21,17 +21,17 @@ func setup(stats: Dictionary) -> void:
 	is_boss = stats.get("is_boss", false)
 	if is_boss:
 		scale = Vector2(1.8, 1.8)
-		$Sprite2D.modulate = Color("ff9f4a")
+		var sprite = get_node_or_null("Sprite2D")
+		if sprite:
+			sprite.modulate = Color("ff9f4a")
 
 func _ready() -> void:
-	player = get_parent().get_node_or_null("Player")
+	player = get_tree().get_first_node_in_group("player")
 
 func _physics_process(delta: float) -> void:
 	hit_timer = max(hit_timer - delta, 0.0)
 	if not player:
-		var gameplay_node = get_parent()
-		if gameplay_node:
-			player = gameplay_node.get_node_or_null("Player")
+		player = get_tree().get_first_node_in_group("player")
 
 	if player:
 		var direction = (player.global_position - global_position).normalized()
@@ -41,9 +41,10 @@ func _physics_process(delta: float) -> void:
 		for i in range(get_slide_collision_count()):
 			var collision = get_slide_collision(i)
 			var collider = collision.get_collider()
-			if collider.is_in_group("player") and hit_timer <= 0.0:
+			if collider and collider.is_in_group("player") and hit_timer <= 0.0:
 				hit_timer = HIT_COOLDOWN
-				collider.apply_damage(damage)
+				if collider.has_method("apply_damage"):
+					collider.apply_damage(damage)
 
 func apply_damage(amount: float) -> void:
 	hp -= amount

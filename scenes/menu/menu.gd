@@ -10,7 +10,7 @@ func _ready():
 	# needed for gamepads to work
 	btn_striker.grab_focus()
 	if OS.has_feature('web'):
-		btn_exit.queue_free() # exit button dosn't make sense on HTML5
+		btn_exit.queue_free() # exit button doesn't make sense on HTML5
 
 
 func _start_game(character_id: String) -> void:

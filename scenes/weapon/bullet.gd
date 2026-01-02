@@ -19,5 +19,6 @@ func _on_body_entered(body):
 		var final_damage = damage
 		if randf() < crit_chance:
 			final_damage *= 1.6
-		body.apply_damage(final_damage)
+		if body.has_method("apply_damage"):
+			body.apply_damage(final_damage)
 		queue_free()
