@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal leveled_up
+
 const FRICTION = 800.0
 const TOUCH_DEADZONE = 12.0
 const TARGET_RADIUS = 280.0
@@ -31,7 +33,6 @@ var touch_direction := Vector2.ZERO
 
 var invincible_timer := 0.0
 
-signal leveled_up
 
 func initialize(character_data: Dictionary) -> void:
 	base_speed = character_data.get("base_speed", base_speed)
@@ -52,12 +53,14 @@ func initialize(character_data: Dictionary) -> void:
 	xp_to_next = GameData.get_xp_required(level)
 	update_relic_stats()
 
+
 func _ready() -> void:
 	add_to_group("player")
 	$PickupArea.add_to_group("xp_pickup")
 	$PickupArea/CollisionShape2D.shape.radius = pickup_radius
 	$TargetArea.monitoring = true
 	$TargetArea/CollisionShape2D.shape.radius = TARGET_RADIUS
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
@@ -74,6 +77,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			touch_direction = delta.normalized() * min(delta.length() / 80.0, 1.0)
 		else:
 			touch_direction = Vector2.ZERO
+
 
 func _physics_process(delta: float) -> void:
 	if invincible_timer > 0.0:
@@ -95,6 +99,7 @@ func _physics_process(delta: float) -> void:
 	process_weapons(delta)
 	queue_redraw()
 
+
 func process_weapons(delta: float) -> void:
 	for relic_id in relics.keys():
 		var relic = GameData.RELICS.get(relic_id, {})
@@ -114,6 +119,7 @@ func process_weapons(delta: float) -> void:
 				activate_invincibility(stats.get("invincibility_duration", 2.5))
 		else:
 			relic_timers[relic_id] = timer
+
 
 func fire_pistol(stats: Dictionary) -> void:
 	var nearby = $TargetArea.get_overlapping_bodies()
@@ -140,6 +146,7 @@ func fire_pistol(stats: Dictionary) -> void:
 		bullet.crit_chance = stats.get("crit", 0.05)
 		get_parent().add_child(bullet)
 
+
 func fire_sword(stats: Dictionary) -> void:
 	var slash = SwordSlash.instantiate()
 	slash.global_position = global_position
@@ -154,6 +161,7 @@ func fire_sword(stats: Dictionary) -> void:
 		collision_shape.shape = circle_shape
 	get_parent().add_child(slash)
 
+
 func add_relic(relic_id: String) -> void:
 	if relics.has(relic_id):
 		var new_level = min(relics[relic_id] + 1, GameData.MAX_RELIC_LEVEL)
@@ -164,6 +172,7 @@ func add_relic(relic_id: String) -> void:
 		relics[relic_id] = 1
 		relic_timers[relic_id] = 0.0
 	update_relic_stats()
+
 
 func update_relic_stats() -> void:
 	pickup_radius = 30.0
@@ -187,6 +196,7 @@ func update_relic_stats() -> void:
 	shield = min(shield, max_shield)
 	$PickupArea/CollisionShape2D.shape.radius = pickup_radius
 
+
 func apply_damage(amount: float) -> void:
 	if invincible_timer > 0.0:
 		return
@@ -203,6 +213,7 @@ func apply_damage(amount: float) -> void:
 	if hp <= 0:
 		game_over()
 
+
 func gain_xp(amount: int) -> void:
 	xp += amount
 	while xp >= xp_to_next:
@@ -211,17 +222,21 @@ func gain_xp(amount: int) -> void:
 		xp_to_next = GameData.get_xp_required(level)
 		emit_signal("leveled_up")
 
+
 func heal_full() -> void:
 	hp = max_hp
 	shield = max_shield
 
+
 func activate_invincibility(duration: float) -> void:
 	invincible_timer = max(invincible_timer, duration)
+
 
 func game_over() -> void:
 	var gameplay = get_tree().get_first_node_in_group("gameplay")
 	if gameplay:
 		gameplay.on_player_defeated()
+
 
 func _draw() -> void:
 	var bar_width = 60.0
@@ -232,4 +247,7 @@ func _draw() -> void:
 	var bg_rect = Rect2(offset, Vector2(bar_width, bar_height * 2 + 3))
 	draw_rect(bg_rect, Color(0, 0, 0, 0.4))
 	draw_rect(Rect2(offset, Vector2(bar_width * shield_ratio, bar_height)), Color("4ad9ff"))
-	draw_rect(Rect2(offset + Vector2(0, bar_height + 3), Vector2(bar_width * hp_ratio, bar_height)), Color("ff5a5a"))
+	draw_rect(
+		Rect2(offset + Vector2(0, bar_height + 3), Vector2(bar_width * hp_ratio, bar_height)),
+		Color("ff5a5a")
+	)

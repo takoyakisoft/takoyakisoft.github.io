@@ -17,7 +17,8 @@ var _changing_scene = false
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var cur_scene: Node = get_tree().current_scene
-	_history.add(cur_scene.scene_file_path, {})
+	if cur_scene:
+		_history.add(cur_scene.scene_file_path, {})
 
 	_transitions = _GGT_Transitions.instantiate()
 	get_node("/root").call_deferred("add_child", _transitions)

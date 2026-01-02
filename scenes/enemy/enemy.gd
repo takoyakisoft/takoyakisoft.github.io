@@ -13,6 +13,7 @@ var speed := BASE_SPEED
 var is_boss := false
 var hit_timer := 0.0
 
+
 func setup(stats: Dictionary) -> void:
 	max_hp = stats.get("max_hp", BASE_HP)
 	hp = max_hp
@@ -25,8 +26,10 @@ func setup(stats: Dictionary) -> void:
 		if sprite:
 			sprite.modulate = Color("ff9f4a")
 
+
 func _ready() -> void:
 	player = get_tree().get_first_node_in_group("player")
+
 
 func _physics_process(delta: float) -> void:
 	hit_timer = max(hit_timer - delta, 0.0)
@@ -46,6 +49,7 @@ func _physics_process(delta: float) -> void:
 				if collider.has_method("apply_damage"):
 					collider.apply_damage(damage)
 
+
 func apply_damage(amount: float) -> void:
 	hp -= amount
 	var gameplay = get_tree().get_first_node_in_group("gameplay")
@@ -53,6 +57,7 @@ func apply_damage(amount: float) -> void:
 		gameplay.spawn_damage_number(global_position, amount, false)
 	if hp <= 0:
 		die()
+
 
 func die() -> void:
 	var gameplay = get_tree().get_first_node_in_group("gameplay")

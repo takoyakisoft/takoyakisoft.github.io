@@ -1,0 +1,23 @@
+name: Quality
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Scony/godot-gdscript-toolkit@master
+      - run: gdformat --check scenes/ tests/
+      - run: gdlint scenes/ tests/
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: godot-gdunit-labs/gdUnit4-action@v1
+        with:
+          godot-version: "4.5"
+          paths: "res://tests"

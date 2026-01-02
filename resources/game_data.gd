@@ -1,5 +1,5 @@
-extends Node
 class_name GameData
+extends Node
 
 const MAX_RELIC_SLOTS := 6
 const MAX_RELIC_LEVEL := 15
@@ -44,17 +44,20 @@ const GEM_TYPES := [
 ]
 
 const ITEM_TYPES := {
-	"wipe_enemies": {
+	"wipe_enemies":
+	{
 		"name": "殲滅コア",
 		"description": "ボス以外の敵をすべて撃破",
 		"color": Color("ffcf4a"),
 	},
-	"collect_xp": {
+	"collect_xp":
+	{
 		"name": "収集ドローン",
 		"description": "全ての経験値を取得",
 		"color": Color("4ad9ff"),
 	},
-	"currency": {
+	"currency":
+	{
 		"name": "クレジット拾得",
 		"description": "ゲーム内通貨 +50",
 		"color": Color("9cff73"),
@@ -62,116 +65,141 @@ const ITEM_TYPES := {
 }
 
 const RELICS := {
-	"pistol": {
+	"pistol":
+	{
 		"name": "ピストル",
 		"type": "weapon",
 		"description": "近い敵へ自動射撃。威力と連射が伸びる。",
-		"stats": {
+		"stats":
+		{
 			"damage": 6.0,
 			"cooldown": 0.55,
 			"bullets": 1,
 			"crit": 0.05,
 		},
-		"per_level": {
+		"per_level":
+		{
 			"damage": 1.6,
-			"cooldown": -0.02,
+			"cooldown": - 0.03,
+			"bullets": 0.3,
 			"crit": 0.01,
 		},
 	},
-	"sword": {
+	"sword":
+	{
 		"name": "剣",
 		"type": "weapon",
 		"description": "周囲に斬撃を発生。範囲と威力が成長。",
-		"stats": {
+		"stats":
+		{
 			"damage": 10.0,
 			"cooldown": 1.4,
 			"radius": 70.0,
 			"duration": 0.25,
 			"crit": 0.05,
 		},
-		"per_level": {
-			"damage": 2.2,
-			"cooldown": -0.03,
+		"per_level":
+		{
+			"damage": 5.0,
+			"cooldown": - 0.05,
 			"radius": 4.0,
 			"duration": 0.01,
 			"crit": 0.01,
 		},
 	},
-	"magnet": {
+	"magnet":
+	{
 		"name": "マグネットコア",
 		"type": "utility",
 		"description": "経験値の回収半径が広がる。",
-		"stats": {
+		"stats":
+		{
 			"pickup_bonus": 0.25,
 		},
-		"per_level": {
+		"per_level":
+		{
 			"pickup_bonus": 0.15,
 		},
 	},
-	"vitality": {
+	"vitality":
+	{
 		"name": "バイタリティ",
 		"type": "passive",
 		"description": "最大HPとシールドを増加。",
-		"stats": {
+		"stats":
+		{
 			"max_hp_bonus": 10.0,
 		},
-		"per_level": {
+		"per_level":
+		{
 			"max_hp_bonus": 6.0,
 		},
 	},
-	"momentum": {
+	"momentum":
+	{
 		"name": "モメンタム",
 		"type": "passive",
 		"description": "移動速度が上昇。",
-		"stats": {
+		"stats":
+		{
 			"move_speed_bonus": 12.0,
 		},
-		"per_level": {
+		"per_level":
+		{
 			"move_speed_bonus": 6.0,
 		},
 	},
-	"shield_core": {
+	"shield_core":
+	{
 		"name": "シールドコア",
 		"type": "passive",
 		"description": "シールド回復速度が上昇。",
-		"stats": {
+		"stats":
+		{
 			"shield_regen": 2.0,
 		},
-		"per_level": {
+		"per_level":
+		{
 			"shield_regen": 1.0,
 		},
 	},
-	"aegis": {
+	"aegis":
+	{
 		"name": "エギスフィールド",
 		"type": "active",
 		"description": "一定間隔で数秒間無敵化。",
-		"stats": {
+		"stats":
+		{
 			"cooldown": 18.0,
 			"invincibility_duration": 2.5,
 		},
-		"per_level": {
-			"cooldown": -0.4,
+		"per_level":
+		{
+			"cooldown": - 0.4,
 			"invincibility_duration": 0.25,
 		},
 	},
 }
 
 const CHARACTERS := {
-	"striker": {
+	"striker":
+	{
 		"name": "ストライカー",
 		"description": "バランス型。剣+ピストルを装備。",
 		"base_hp": 100.0,
 		"base_speed": 220.0,
 		"starting_relics": ["pistol", "sword"],
 	},
-	"gunner": {
+	"gunner":
+	{
 		"name": "ガンナー",
 		"description": "射撃特化。ピストル性能が高め。",
 		"base_hp": 90.0,
 		"base_speed": 230.0,
 		"starting_relics": ["pistol", "pistol", "sword"],
 	},
-	"blade": {
+	"blade":
+	{
 		"name": "ブレード",
 		"description": "近接強化。剣が強い。",
 		"base_hp": 110.0,
@@ -179,6 +207,7 @@ const CHARACTERS := {
 		"starting_relics": ["sword", "sword", "pistol"],
 	},
 }
+
 
 static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 	var relic = RELICS.get(relic_id, {})
@@ -193,6 +222,7 @@ static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 		stats["duration"] = max(stats["duration"], 0.05)
 	return stats
 
+
 static func get_random_gem_type() -> Dictionary:
 	var total_weight = 0
 	for gem in GEM_TYPES:
@@ -205,8 +235,10 @@ static func get_random_gem_type() -> Dictionary:
 			return gem
 	return GEM_TYPES[0]
 
+
 static func get_wave_index(time_elapsed: float) -> int:
 	return int(floor(time_elapsed / 30.0)) + 1
+
 
 static func get_wave_settings(wave: int) -> Dictionary:
 	var settings := {
@@ -220,9 +252,9 @@ static func get_wave_settings(wave: int) -> Dictionary:
 
 	if wave == 11:
 		settings.spawn_enabled = true
-		settings.spawn_rate = 999.0
-		settings.enemy_hp_multiplier = 6.0
-		settings.enemy_damage_multiplier = 3.0
+		settings.spawn_rate = 1.0
+		settings.enemy_hp_multiplier = 5.0
+		settings.enemy_damage_multiplier = 5.0
 		settings.enemy_speed_multiplier = 1.3
 		settings.boss = true
 		return settings
@@ -232,16 +264,25 @@ static func get_wave_settings(wave: int) -> Dictionary:
 	if wave >= 13:
 		settings.spawn_enabled = true
 		settings.spawn_rate = 0.35
-		settings.enemy_hp_multiplier = 4.0 + (wave - 13) * 0.4
-		settings.enemy_damage_multiplier = 3.0 + (wave - 13) * 0.3
+		settings.enemy_hp_multiplier = 8.0 + (wave - 13) * 0.8
+		settings.enemy_damage_multiplier = 6.0 + (wave - 13) * 0.6
 		settings.enemy_speed_multiplier = 1.4 + (wave - 13) * 0.05
 		return settings
 
-	settings.spawn_rate = max(0.8 - (wave - 1) * 0.05, 0.35)
-	settings.enemy_hp_multiplier = 1.0 + (wave - 1) * 0.25
+	if wave < 6:
+		settings.spawn_rate = max(0.8 - (wave - 1) * 0.05, 0.5)
+		settings.enemy_hp_multiplier = 1.0 + (wave - 1) * 0.25
+	else:
+		# Exponential ramp up from wave 6
+		# spawn_rate decreases (more enemies), HP increases aggressively
+		var expo = float(wave - 5)
+		settings.spawn_rate = max(0.5 * pow(0.85, expo), 0.05)
+		settings.enemy_hp_multiplier = 2.25 + pow(1.2, expo)
+
 	settings.enemy_damage_multiplier = 1.0 + (wave - 1) * 0.15
 	settings.enemy_speed_multiplier = 1.0 + (wave - 1) * 0.02
 	return settings
+
 
 static func get_xp_required(level: int) -> int:
 	return int(10 + level * 6 + pow(level, 1.2) * 3)

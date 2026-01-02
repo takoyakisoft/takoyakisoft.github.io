@@ -1,5 +1,8 @@
 extends Node
 
+const SPAWN_OFFSET := 50.0
+const ITEM_DROP_CHANCE := 0.08
+
 var Enemy = preload("res://scenes/enemy/enemy.tscn")
 var XpGem = preload("res://scenes/pickups/xp_gem.tscn")
 var ItemPickup = preload("res://scenes/pickups/item_pickup.tscn")
@@ -19,9 +22,6 @@ var pending_levelups := 0
 
 var currency := 0
 
-const SPAWN_OFFSET := 50.0
-const ITEM_DROP_CHANCE := 0.08
-
 @onready var player := $Player
 @onready var timer_label := $HUD/TimerLabel
 @onready var levelup_layer := $HUD/LevelUpLayer
@@ -33,7 +33,9 @@ const ITEM_DROP_CHANCE := 0.08
 @onready var damage_numbers := $DamageNumbers
 @onready var pickup_container := $PickupContainer
 
+
 func _ready() -> void:
+	$HUD.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("gameplay")
 	load_currency()
 	var scene_data = GGT.get_current_scene_data()
@@ -48,6 +50,7 @@ func _ready() -> void:
 	spawn_rate = wave_settings.spawn_rate
 	update_timer_label()
 
+
 func _process(delta: float) -> void:
 	if get_tree().paused:
 		return
@@ -56,6 +59,7 @@ func _process(delta: float) -> void:
 	update_timer_label()
 	update_wave_state(delta)
 	spawn_enemies(delta)
+
 
 func update_wave_state(delta: float) -> void:
 	if boss_active:
@@ -77,10 +81,9 @@ func update_wave_state(delta: float) -> void:
 		boss_spawned = true
 		boss_active = true
 
+
 func spawn_enemies(delta: float) -> void:
 	if not wave_settings.get("spawn_enabled", true):
-		return
-	if wave_settings.get("boss", false):
 		return
 
 	spawn_timer += delta
@@ -88,7 +91,8 @@ func spawn_enemies(delta: float) -> void:
 		spawn_timer = 0.0
 		spawn_enemy(false)
 
-func spawn_enemy(is_boss: bool) -> void:
+
+func spawn_enemy(is_boss: bool, stats_override: Dictionary = {}) -> void:
 	if not is_instance_valid(player):
 		return
 	var enemy = Enemy.instantiate()
@@ -101,27 +105,42 @@ func spawn_enemy(is_boss: bool) -> void:
 		0:
 			spawn_pos = Vector2(randf_range(0, viewport_size.x), -SPAWN_OFFSET) + top_left
 		1:
-			spawn_pos = Vector2(randf_range(0, viewport_size.x), viewport_size.y + SPAWN_OFFSET) + top_left
+			spawn_pos = (
+				Vector2(randf_range(0, viewport_size.x), viewport_size.y + SPAWN_OFFSET) + top_left
+			)
 		2:
 			spawn_pos = Vector2(-SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
 		3:
-			spawn_pos = Vector2(viewport_size.x + SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
+			spawn_pos = (
+				Vector2(viewport_size.x + SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
+			)
 
-	var stats = {
-		"max_hp": 20.0 * wave_settings.enemy_hp_multiplier,
-		"damage": 8.0 * wave_settings.enemy_damage_multiplier,
-		"speed": 100.0 * wave_settings.enemy_speed_multiplier,
-		"is_boss": is_boss,
-	}
+	var stats = stats_override
+	if stats.is_empty():
+		stats = {
+			"max_hp": 20.0 * wave_settings.enemy_hp_multiplier,
+			"damage": 8.0 * wave_settings.enemy_damage_multiplier,
+			"speed": 100.0 * wave_settings.enemy_speed_multiplier,
+			"is_boss": is_boss,
+		}
+	else:
+		# Ensure is_boss flag is set correctly even if override provided
+		stats["is_boss"] = is_boss
+
 	enemy.setup(stats)
 	enemy.position = spawn_pos
 	add_child(enemy)
 
+
 func spawn_boss() -> void:
-	var boss_settings = GameData.get_wave_settings(11)
-	wave_settings = boss_settings
-	spawn_rate = boss_settings.spawn_rate
-	spawn_enemy(true)
+	# Define Boss specifically
+	var boss_stats = {
+		"max_hp": 20.0 * 50.0,
+		"damage": 8.0 * 6.0,
+		"speed": 100.0 * 1.3,
+	}
+	spawn_enemy(true, boss_stats)
+
 
 func on_enemy_defeated(position: Vector2, was_boss: bool) -> void:
 	spawn_xp_gem(position)
@@ -131,12 +150,14 @@ func on_enemy_defeated(position: Vector2, was_boss: bool) -> void:
 		boss_timer = 0.0
 		boss_active = false
 
+
 func spawn_xp_gem(position: Vector2) -> void:
 	var gem_data = GameData.get_random_gem_type()
 	var gem = XpGem.instantiate()
 	gem.global_position = position
 	gem.setup(gem_data.value, gem_data.color)
-	pickup_container.add_child(gem)
+	pickup_container.call_deferred("add_child", gem)
+
 
 func spawn_item_drop(position: Vector2) -> void:
 	var keys = GameData.ITEM_TYPES.keys()
@@ -145,13 +166,14 @@ func spawn_item_drop(position: Vector2) -> void:
 	var item = ItemPickup.instantiate()
 	item.global_position = position
 	item.setup(item_key, data.name, data.color)
-	pickup_container.add_child(item)
+	pickup_container.call_deferred("add_child", item)
+
 
 func apply_item_effect(item_type: String) -> void:
 	match item_type:
 		"wipe_enemies":
 			for enemy in get_tree().get_nodes_in_group("enemy"):
-				if is_instance_valid(enemy) and not enemy.get("is_boss", false):
+				if is_instance_valid(enemy) and not enemy.get("is_boss"):
 					if enemy.has_method("apply_damage"):
 						enemy.apply_damage(9999)
 		"collect_xp":
@@ -163,16 +185,19 @@ func apply_item_effect(item_type: String) -> void:
 			currency += 50
 			save_currency()
 
+
 func spawn_damage_number(world_position: Vector2, amount: float, is_player: bool) -> void:
 	var dmg = DamageNumber.instantiate()
 	dmg.global_position = world_position
 	dmg.setup(amount, is_player)
 	damage_numbers.add_child(dmg)
 
+
 func _on_player_leveled() -> void:
 	pending_levelups += 1
 	if not get_tree().paused:
 		show_levelup_choices()
+
 
 func show_levelup_choices() -> void:
 	if pending_levelups <= 0:
@@ -188,6 +213,7 @@ func show_levelup_choices() -> void:
 			button.text = format_relic_choice(relic_choice_ids[i])
 		else:
 			button.visible = false
+
 
 func build_relic_choices() -> Array[String]:
 	var options: Array[String] = []
@@ -208,6 +234,7 @@ func build_relic_choices() -> Array[String]:
 		options = ["heal_full", "currency_bonus"]
 	return options
 
+
 func format_relic_choice(relic_id: String) -> String:
 	if relic_id == "heal_full":
 		return "HP全回復"
@@ -217,16 +244,17 @@ func format_relic_choice(relic_id: String) -> String:
 	var relic = GameData.RELICS[relic_id]
 	var current_level = player.relics.get(relic_id, 0)
 	var next_level = min(current_level + 1, GameData.MAX_RELIC_LEVEL)
-	var name = relic.name
+	var relic_name = relic.name
 	var desc = relic.description
 	var per_level = relic.per_level
-	var lines = ["%s Lv%d→Lv%d" % [name, current_level, next_level], desc]
+	var lines = ["%s Lv%d→Lv%d" % [relic_name, current_level, next_level], desc]
 	var stats_line := []
 	for key in per_level.keys():
 		stats_line.append("%s %s" % [format_stat_key(key), format_stat_value(key, per_level[key])])
 	if not stats_line.is_empty():
 		lines.append("+" + ", ".join(stats_line))
 	return "\n".join(lines)
+
 
 func format_stat_key(key: String) -> String:
 	var labels = {
@@ -244,6 +272,7 @@ func format_stat_key(key: String) -> String:
 	}
 	return labels.get(key, key)
 
+
 func format_stat_value(key: String, value: float) -> String:
 	if key in ["cooldown"]:
 		return "%.2fs" % value
@@ -251,6 +280,7 @@ func format_stat_value(key: String, value: float) -> String:
 		var percent = int(value * 100)
 		return "%d%%" % percent
 	return "%s" % str(value)
+
 
 func _on_relic_option_pressed(button: Button) -> void:
 	var index = option_buttons.find(button)
@@ -265,6 +295,7 @@ func _on_relic_option_pressed(button: Button) -> void:
 	if pending_levelups > 0:
 		show_levelup_choices()
 
+
 func apply_relic_choice(relic_id: String) -> void:
 	match relic_id:
 		"heal_full":
@@ -275,19 +306,23 @@ func apply_relic_choice(relic_id: String) -> void:
 		_:
 			player.add_relic(relic_id)
 
+
 func update_timer_label() -> void:
 	var total_seconds = int(time_elapsed)
 	var minutes = total_seconds / 60
 	var seconds = total_seconds % 60
 	timer_label.text = "%02d:%02d" % [minutes, seconds]
 
+
 func on_player_defeated() -> void:
 	GGT.restart_scene()
+
 
 func load_currency() -> void:
 	var config = ConfigFile.new()
 	if config.load("user://save.cfg") == OK:
 		currency = int(config.get_value("player", "currency", 0))
+
 
 func save_currency() -> void:
 	var config = ConfigFile.new()

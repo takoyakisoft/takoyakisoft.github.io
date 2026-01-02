@@ -9,8 +9,8 @@ extends Control
 func _ready():
 	# needed for gamepads to work
 	btn_striker.grab_focus()
-	if OS.has_feature('web'):
-		btn_exit.queue_free() # exit button doesn't make sense on HTML5
+	if OS.has_feature("web"):
+		btn_exit.queue_free()  # exit button doesn't make sense on HTML5
 
 
 func _start_game(character_id: String) -> void:
@@ -37,9 +37,7 @@ func _on_ExitButton_pressed() -> void:
 	# gently shutdown the game
 	var transitions = get_node_or_null("/root/GGT_Transitions")
 	if transitions:
-		transitions.fade_in({
-			'show_progress_bar': false
-		})
+		transitions.fade_in({"show_progress_bar": false})
 		await transitions.anim.animation_finished
 		await get_tree().create_timer(0.3).timeout
 	get_tree().quit()
