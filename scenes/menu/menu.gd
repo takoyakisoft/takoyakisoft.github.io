@@ -1,28 +1,36 @@
 extends Control
 
-@onready var btn_play = $MarginContainer/Control/VBoxContainer/PlayButton
+@onready var btn_striker = $MarginContainer/Control/VBoxContainer/StrikerButton
+@onready var btn_gunner = $MarginContainer/Control/VBoxContainer/GunnerButton
+@onready var btn_blade = $MarginContainer/Control/VBoxContainer/BladeButton
 @onready var btn_exit = $MarginContainer/Control/VBoxContainer/ExitButton
 
 
 func _ready():
 	# needed for gamepads to work
-	btn_play.grab_focus()
+	btn_striker.grab_focus()
 	if OS.has_feature('web'):
-		btn_exit.queue_free() # exit button dosn't make sense on HTML5
+		btn_exit.queue_free() # exit button doesn't make sense on HTML5
 
 
-func _on_PlayButton_pressed() -> void:
+func _start_game(character_id: String) -> void:
 	var params = {
 		"show_progress_bar": true,
-		"a_number": 10,
-		"a_string": "Ciao!",
-		"an_array": [1, 2, 3, 4],
-		"a_dict": {
-			"name": "test",
-			"val": 15
-		},
+		"character_id": character_id,
 	}
 	GGT.change_scene("res://scenes/gameplay/gameplay.tscn", params)
+
+
+func _on_StrikerButton_pressed() -> void:
+	_start_game("striker")
+
+
+func _on_GunnerButton_pressed() -> void:
+	_start_game("gunner")
+
+
+func _on_BladeButton_pressed() -> void:
+	_start_game("blade")
 
 
 func _on_ExitButton_pressed() -> void:

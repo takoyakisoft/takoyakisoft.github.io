@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://item_pickup"]
+
+[ext_resource type="Script" path="res://scenes/pickups/item_pickup.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://da2t6lyf41wty" path="res://assets/fonts/open-sans/open-sans-bold.ttf" id="2_font"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_item"]
+radius = 22.0
+
+[sub_resource type="Animation" id="Animation_float"]
+length = 1.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/path = NodePath("Label:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(0, -8), Vector2(0, -4), Vector2(0, -8)]
+}
+
+[node name="ItemPickup" type="Area2D"]
+script = ExtResource("1_script")
+
+[node name="Label" type="Label" parent="."]
+text = "ITEM"
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_item")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+animations = {
+"float": SubResource("Animation_float")
+}

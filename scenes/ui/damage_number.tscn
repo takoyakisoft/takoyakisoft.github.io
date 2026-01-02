@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://damage_number"]
+
+[ext_resource type="Script" path="res://scenes/ui/damage_number.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://da2t6lyf41wty" path="res://assets/fonts/open-sans/open-sans-bold.ttf" id="2_font"]
+
+[node name="DamageNumber" type="Label"]
+script = ExtResource("1_script")
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 24
+text = "0"

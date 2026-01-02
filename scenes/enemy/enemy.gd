@@ -1,30 +1,61 @@
 extends CharacterBody2D
 
-const SPEED = 100.0
-var player = null
+const BASE_SPEED = 100.0
+const BASE_HP = 20.0
+const BASE_DAMAGE = 8.0
+const HIT_COOLDOWN = 0.6
 
-func _ready():
-	player = get_parent().get_node_or_null("Player")
+var player: Node = null
+var max_hp := BASE_HP
+var hp := BASE_HP
+var damage := BASE_DAMAGE
+var speed := BASE_SPEED
+var is_boss := false
+var hit_timer := 0.0
 
-func _physics_process(delta):
-	# If player reference was lost or never found, try to find it again
+func setup(stats: Dictionary) -> void:
+	max_hp = stats.get("max_hp", BASE_HP)
+	hp = max_hp
+	damage = stats.get("damage", BASE_DAMAGE)
+	speed = stats.get("speed", BASE_SPEED)
+	is_boss = stats.get("is_boss", false)
+	if is_boss:
+		scale = Vector2(1.8, 1.8)
+		var sprite = get_node_or_null("Sprite2D")
+		if sprite:
+			sprite.modulate = Color("ff9f4a")
+
+func _ready() -> void:
+	player = get_tree().get_first_node_in_group("player")
+
+func _physics_process(delta: float) -> void:
+	hit_timer = max(hit_timer - delta, 0.0)
 	if not player:
-		# If the parent is not ready or player is not a sibling, this might still fail.
-		# A more robust way is getting by group or unique name in scene.
-		# For this structure:
-		var gameplay_node = get_parent()
-		if gameplay_node:
-			player = gameplay_node.get_node_or_null("Player")
+		player = get_tree().get_first_node_in_group("player")
 
 	if player:
 		var direction = (player.global_position - global_position).normalized()
-		velocity = direction * SPEED
+		velocity = direction * speed
 		move_and_slide()
 
-		for i in get_slide_collision_count():
+		for i in range(get_slide_collision_count()):
 			var collision = get_slide_collision(i)
 			var collider = collision.get_collider()
-			if collider.name == "Player":
-				print("Player hit! Game Over logic here.")
-				# For now, just reload scene to restart
-				GGT.restart_scene()
+			if collider and collider.is_in_group("player") and hit_timer <= 0.0:
+				hit_timer = HIT_COOLDOWN
+				if collider.has_method("apply_damage"):
+					collider.apply_damage(damage)
+
+func apply_damage(amount: float) -> void:
+	hp -= amount
+	var gameplay = get_tree().get_first_node_in_group("gameplay")
+	if gameplay:
+		gameplay.spawn_damage_number(global_position, amount, false)
+	if hp <= 0:
+		die()
+
+func die() -> void:
+	var gameplay = get_tree().get_first_node_in_group("gameplay")
+	if gameplay:
+		gameplay.on_enemy_defeated(global_position, is_boss)
+	queue_free()
