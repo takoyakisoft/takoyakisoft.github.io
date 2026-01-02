@@ -6,11 +6,6 @@ var duration := 0.2
 
 
 func _ready() -> void:
-	var shape_node = get_node_or_null("CollisionShape2D")
-	var radius = 70.0
-	if shape_node and shape_node.shape is CircleShape2D:
-		radius = shape_node.shape.radius
-
 	# Hide sprite if it exists, as we draw manually
 	if has_node("Sprite2D"):
 		$Sprite2D.visible = false
@@ -18,7 +13,7 @@ func _ready() -> void:
 	# Setup visual
 	queue_redraw()
 
-	modulate = Color(1.5, 1.5, 2.0, 1.0)  # Start bright
+	modulate = Color(1.5, 1.5, 2.0, 1.0) # Start bright
 	var tween = create_tween()
 	tween.tween_property(self, "modulate", Color(1, 1, 1, 0.0), duration)
 	tween.tween_callback(queue_free)

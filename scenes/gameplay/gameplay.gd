@@ -300,7 +300,7 @@ func apply_relic_choice(relic_id: String) -> void:
 
 func update_timer_label() -> void:
 	var total_seconds = int(time_elapsed)
-	var minutes = int(total_seconds / 60.0)
+	var minutes = total_seconds / 60
 	var seconds = total_seconds % 60
 	timer_label.text = "%02d:%02d" % [minutes, seconds]
 
