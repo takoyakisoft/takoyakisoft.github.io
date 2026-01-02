@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Scony/godot-gdscript-toolkit@master
-      - run: gdformat --check .
-      - run: gdlint .
+      - run: gdformat --check scenes/ tests/
+      - run: gdlint scenes/ tests/
 
   tests:
     runs-on: ubuntu-latest

@@ -1,11 +1,11 @@
 extends Area2D
 
 var item_type := "currency"
+var label_text_val := ""
+var label_color_val := Color.WHITE
 
 @onready var label := $Label
 
-var label_text_val := ""
-var label_color_val := Color.WHITE
 
 func setup(new_type: String, text: String, color: Color) -> void:
 	item_type = new_type
@@ -15,6 +15,7 @@ func setup(new_type: String, text: String, color: Color) -> void:
 		label.text = label_text_val
 		label.modulate = label_color_val
 
+
 func _ready() -> void:
 	if label_text_val != "":
 		label.text = label_text_val
@@ -22,6 +23,7 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	if $AnimationPlayer.has_animation("float"):
 		$AnimationPlayer.play("float")
+
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("xp_pickup"):
