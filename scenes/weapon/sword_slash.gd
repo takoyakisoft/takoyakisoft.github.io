@@ -13,7 +13,7 @@ func _ready() -> void:
 	# Setup visual
 	queue_redraw()
 
-	modulate = Color(1.5, 1.5, 2.0, 1.0) # Start bright
+	modulate = Color(1.5, 1.5, 2.0, 1.0)  # Start bright
 	var tween = create_tween()
 	tween.tween_property(self, "modulate", Color(1, 1, 1, 0.0), duration)
 	tween.tween_callback(queue_free)

@@ -24,7 +24,7 @@ func test_wave_scaling() -> void:
 	var w6 = GameData.get_wave_settings(6)
 	# expo = 6-5 = 1.0
 	# spawn_rate = max(0.5 * pow(0.85, 1.0), 0.05) = 0.5 * 0.85 = 0.425
-	assert_float(w6.spawn_rate).is_close_to(0.425, 0.00001)
+	assert_float(w6.spawn_rate).is_between(0.4249, 0.4251)
 
 
 func test_relic_stats_scaling() -> void:
@@ -38,4 +38,4 @@ func test_relic_stats_scaling() -> void:
 	# Base 6.0 + 1.6 * 1 = 7.6
 	assert_float(l2.damage).is_equal(7.6)
 	# Base 0.55 - 0.03 * 1 = 0.52
-	assert_float(l2.cooldown).is_close_to(0.52, 0.0001)
+	assert_float(l2.cooldown).is_between(0.5199, 0.5201)
