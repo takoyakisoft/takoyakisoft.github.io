@@ -253,8 +253,8 @@ static func get_wave_settings(wave: int) -> Dictionary:
 	if wave == 11:
 		settings.spawn_enabled = true
 		settings.spawn_rate = 1.0
-		settings.enemy_hp_multiplier = 50.0
-		settings.enemy_damage_multiplier = 6.0
+		settings.enemy_hp_multiplier = 5.0
+		settings.enemy_damage_multiplier = 5.0
 		settings.enemy_speed_multiplier = 1.3
 		settings.boss = true
 		return settings

@@ -11,7 +11,7 @@ func test_get_wave_settings_boss() -> void:
 	var settings = GameData.get_wave_settings(11)
 	assert_bool(settings.boss).is_true()
 	assert_float(settings.spawn_rate).is_equal(1.0)
-	assert_float(settings.enemy_hp_multiplier).is_equal(50.0)
+	assert_float(settings.enemy_hp_multiplier).is_equal(5.0)
 
 
 func test_wave_scaling() -> void:

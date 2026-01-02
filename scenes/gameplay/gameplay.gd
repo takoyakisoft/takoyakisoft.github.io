@@ -92,7 +92,7 @@ func spawn_enemies(delta: float) -> void:
 		spawn_enemy(false)
 
 
-func spawn_enemy(is_boss: bool) -> void:
+func spawn_enemy(is_boss: bool, stats_override: Dictionary = {}) -> void:
 	if not is_instance_valid(player):
 		return
 	var enemy = Enemy.instantiate()
@@ -115,22 +115,31 @@ func spawn_enemy(is_boss: bool) -> void:
 				Vector2(viewport_size.x + SPAWN_OFFSET, randf_range(0, viewport_size.y)) + top_left
 			)
 
-	var stats = {
-		"max_hp": 20.0 * wave_settings.enemy_hp_multiplier,
-		"damage": 8.0 * wave_settings.enemy_damage_multiplier,
-		"speed": 100.0 * wave_settings.enemy_speed_multiplier,
-		"is_boss": is_boss,
-	}
+	var stats = stats_override
+	if stats.is_empty():
+		stats = {
+			"max_hp": 20.0 * wave_settings.enemy_hp_multiplier,
+			"damage": 8.0 * wave_settings.enemy_damage_multiplier,
+			"speed": 100.0 * wave_settings.enemy_speed_multiplier,
+			"is_boss": is_boss,
+		}
+	else:
+		# Ensure is_boss flag is set correctly even if override provided
+		stats["is_boss"] = is_boss
+
 	enemy.setup(stats)
 	enemy.position = spawn_pos
 	add_child(enemy)
 
 
 func spawn_boss() -> void:
-	var boss_settings = GameData.get_wave_settings(11)
-	wave_settings = boss_settings
-	spawn_rate = boss_settings.spawn_rate
-	spawn_enemy(true)
+	# Define Boss specifically
+	var boss_stats = {
+		"max_hp": 20.0 * 50.0,
+		"damage": 8.0 * 6.0,
+		"speed": 100.0 * 1.3,
+	}
+	spawn_enemy(true, boss_stats)
 
 
 func on_enemy_defeated(position: Vector2, was_boss: bool) -> void:
