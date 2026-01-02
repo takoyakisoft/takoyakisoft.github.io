@@ -18,7 +18,7 @@ func test_wave_scaling() -> void:
 	# Wave 5: Linear scaling
 	var w5 = GameData.get_wave_settings(5)
 	# spawn_rate = max(0.8 - (5-1)*0.05, 0.5) = 0.8 - 0.2 = 0.6
-	assert_float(w5.spawn_rate).is_equal(0.6)
+	assert_float(w5.spawn_rate).is_between(0.5999, 0.6001)
 
 	# Wave 6: Exponential scaling start
 	var w6 = GameData.get_wave_settings(6)
