@@ -32,6 +32,74 @@ theme_override_font_sizes/font_size = 36
 text = "00:00"
 horizontal_alignment = 1
 
+[node name="StageLabel" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.0
+offset_top = 52.0
+offset_right = 140.0
+offset_bottom = 74.0
+grow_horizontal = 2
+horizontal_alignment = 1
+text = "ステージ: -"
+
+[node name="RelicPanel" type="Panel" parent="HUD"]
+custom_minimum_size = Vector2(280, 240)
+layout_mode = 1
+anchors_preset = 0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = 280.0
+offset_bottom = 240.0
+
+[node name="RelicScroll" type="ScrollContainer" parent="HUD/RelicPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RelicVBox" type="VBoxContainer" parent="HUD/RelicPanel/RelicScroll"]
+layout_mode = 2
+theme_override_constants/separation = 8
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AttackRelicLabel" type="Label" parent="HUD/RelicPanel/RelicScroll/RelicVBox"]
+layout_mode = 2
+autowrap_mode = 0
+size_flags_horizontal = 3
+text = "攻撃レリック 0/6"
+
+[node name="StatRelicLabel" type="Label" parent="HUD/RelicPanel/RelicScroll/RelicVBox"]
+layout_mode = 2
+autowrap_mode = 0
+size_flags_horizontal = 3
+text = "ステータスレリック 0/6"
+
+[node name="BossLabel" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 74.0
+offset_right = 120.0
+offset_bottom = 96.0
+grow_horizontal = 2
+horizontal_alignment = 1
+text = "ボス出現まで 05:00"
+
 [node name="LevelUpLayer" type="Control" parent="HUD"]
 visible = false
 layout_mode = 1

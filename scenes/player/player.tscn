@@ -18,6 +18,14 @@ script = ExtResource("1_script")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_icon")
 
+[node name="StatusLabel" type="Label" parent="."]
+layout_mode = 0
+position = Vector2(-40, -72)
+custom_minimum_size = Vector2(80, 20)
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player")
 

@@ -5,6 +5,7 @@ const BULLET_LIFETIME = 2.0
 var direction = Vector2.RIGHT
 var damage := 6.0
 var crit_chance := 0.05
+var virus_stats: Dictionary = {}
 
 
 func _ready():
@@ -24,4 +25,6 @@ func _on_body_entered(body):
 			final_damage *= 1.6
 		if body.has_method("apply_damage"):
 			body.apply_damage(final_damage)
+		if not virus_stats.is_empty() and body.has_method("apply_virus"):
+			body.apply_virus(virus_stats)
 		queue_free()
