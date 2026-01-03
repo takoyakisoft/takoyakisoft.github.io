@@ -5,6 +5,10 @@ const BASE_HP = 20.0
 const BASE_DAMAGE = 8.0
 const HIT_COOLDOWN = 0.6
 const EXTERNAL_VELOCITY_DECAY = 800.0
+const ORBIT_RADIAL_CORRECTION = 3.0
+const FLING_MIN_SPEED = 120.0
+const FLING_STOP_THRESHOLD = 10.0
+const FLING_DECAY_EXTRA = 100.0
 
 var player: Node = null
 var max_hp := BASE_HP
@@ -185,13 +189,13 @@ func _process_orbit(delta: float) -> void:
 	var to_center = center_pos - global_position
 	var dist = max(to_center.length(), 0.01)
 	var tangent = Vector2(-to_center.y, to_center.x).normalized() * orbit_sign
-	var radial_correction = (dist - orbit_radius) * 3.0
+	var radial_correction = (dist - orbit_radius) * ORBIT_RADIAL_CORRECTION
 	velocity = tangent * orbit_speed + to_center.normalized() * radial_correction
 	move_and_slide()
 	if orbit_timer >= orbit_duration:
 		orbit_active = false
 		var away = (global_position - center_pos).normalized()
-		external_velocity = away * max(fling_speed, 120.0)
+		external_velocity = away * max(fling_speed, FLING_MIN_SPEED)
 		fling_active = true
 
 
@@ -199,9 +203,9 @@ func _process_fling(delta: float) -> void:
 	velocity = external_velocity
 	move_and_slide()
 	external_velocity = external_velocity.move_toward(
-		Vector2.ZERO, (EXTERNAL_VELOCITY_DECAY + 100.0) * delta
+		Vector2.ZERO, (EXTERNAL_VELOCITY_DECAY + FLING_DECAY_EXTRA) * delta
 	)
-	if external_velocity.length() < 10.0:
+	if external_velocity.length() < FLING_STOP_THRESHOLD:
 		fling_active = false
 		return
 	for i in range(get_slide_collision_count()):
@@ -287,7 +291,6 @@ func _process_virus(delta: float) -> void:
 func _spread_virus_on_death() -> void:
 	if virus_chain_remaining <= 0:
 		return
-	var spreads = virus_chain_remaining
 	var targets: Array = []
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if not is_instance_valid(enemy):
@@ -300,7 +303,7 @@ func _spread_virus_on_death() -> void:
 		if dist <= virus_radius:
 			targets.append(enemy)
 	targets.shuffle()
-	for i in range(min(spreads, targets.size())):
+	for i in range(min(virus_chain_remaining, targets.size())):
 		var target = targets[i]
 		(
 			target
@@ -311,7 +314,7 @@ func _spread_virus_on_death() -> void:
 					"virus_tick": virus_tick,
 					"virus_duration": virus_duration,
 				},
-				spreads - 1
+				virus_chain_remaining - 1
 			)
 		)
 

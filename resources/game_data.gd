@@ -427,6 +427,8 @@ static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 		stats["cooldown"] = max(stats["cooldown"], 0.1)
 	if stats.has("duration"):
 		stats["duration"] = max(stats["duration"], 0.05)
+	if stats.has("virus_tick"):
+		stats["virus_tick"] = max(stats["virus_tick"], 0.1)
 	return stats
 
 
