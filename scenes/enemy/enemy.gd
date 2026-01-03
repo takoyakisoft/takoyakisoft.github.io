@@ -4,6 +4,7 @@ const BASE_SPEED = 100.0
 const BASE_HP = 20.0
 const BASE_DAMAGE = 8.0
 const HIT_COOLDOWN = 0.6
+const EXTERNAL_VELOCITY_DECAY = 800.0
 
 var player: Node = null
 var max_hp := BASE_HP
@@ -119,7 +120,9 @@ func _physics_process(delta: float) -> void:
 		var direction = (player.global_position - global_position).normalized()
 		velocity = direction * speed + external_velocity
 		move_and_slide()
-		external_velocity = external_velocity.move_toward(Vector2.ZERO, 800.0 * delta)
+		external_velocity = external_velocity.move_toward(
+			Vector2.ZERO, EXTERNAL_VELOCITY_DECAY * delta
+		)
 
 		for i in range(get_slide_collision_count()):
 			var collision = get_slide_collision(i)
@@ -195,7 +198,9 @@ func _process_orbit(delta: float) -> void:
 func _process_fling(delta: float) -> void:
 	velocity = external_velocity
 	move_and_slide()
-	external_velocity = external_velocity.move_toward(Vector2.ZERO, 900.0 * delta)
+	external_velocity = external_velocity.move_toward(
+		Vector2.ZERO, (EXTERNAL_VELOCITY_DECAY + 100.0) * delta
+	)
 	if external_velocity.length() < 10.0:
 		fling_active = false
 		return
@@ -279,23 +284,6 @@ func _process_virus(delta: float) -> void:
 	apply_damage(virus_damage)
 
 
-func _find_virus_target() -> Node:
-	var nearest = null
-	var min_dist = INF
-	for enemy in get_tree().get_nodes_in_group("enemy"):
-		if not is_instance_valid(enemy):
-			continue
-		if enemy == self:
-			continue
-		if enemy.get("virus_active"):
-			continue
-		var dist = global_position.distance_to(enemy.global_position)
-		if dist <= virus_radius and dist < min_dist:
-			min_dist = dist
-			nearest = enemy
-	return nearest
-
-
 func _spread_virus_on_death() -> void:
 	if virus_chain_remaining <= 0:
 		return
@@ -360,7 +348,7 @@ func _process_minion(delta: float) -> void:
 	else:
 		velocity = external_velocity
 	move_and_slide()
-	external_velocity = external_velocity.move_toward(Vector2.ZERO, 800.0 * delta)
+	external_velocity = external_velocity.move_toward(Vector2.ZERO, EXTERNAL_VELOCITY_DECAY * delta)
 
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)

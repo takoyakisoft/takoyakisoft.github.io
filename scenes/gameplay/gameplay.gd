@@ -2,6 +2,7 @@ extends Node
 
 const SPAWN_OFFSET := 50.0
 const ITEM_DROP_CHANCE := 0.08
+const MAX_ITEM_DROP_CHANCE := 0.8
 
 var Enemy = preload("res://scenes/enemy/enemy.tscn")
 var XpGem = preload("res://scenes/pickups/xp_gem.tscn")
@@ -137,14 +138,15 @@ func _spawn_enemy(is_boss: bool, stats_override: Dictionary = {}) -> void:
 	else:
 		# Ensure is_boss flag is set correctly even if override provided
 		stats["is_boss"] = is_boss
-	var stage_hp = stage_data.get("enemy_hp_multiplier", 1.0)
-	var stage_damage = stage_data.get("enemy_damage_multiplier", 1.0)
-	var stage_speed = stage_data.get("enemy_speed_multiplier", 1.0)
-	stats["max_hp"] *= stage_hp
-	stats["damage"] *= stage_damage
-	stats["speed"] *= stage_speed
-	if stage_data.has("enemy_tint"):
-		stats["tint"] = stage_data["enemy_tint"]
+	if not is_boss:
+		var stage_hp = stage_data.get("enemy_hp_multiplier", 1.0)
+		var stage_damage = stage_data.get("enemy_damage_multiplier", 1.0)
+		var stage_speed = stage_data.get("enemy_speed_multiplier", 1.0)
+		stats["max_hp"] *= stage_hp
+		stats["damage"] *= stage_damage
+		stats["speed"] *= stage_speed
+		if stage_data.has("enemy_tint") and not stats.has("tint"):
+			stats["tint"] = stage_data["enemy_tint"]
 
 	enemy.setup(stats)
 	enemy.position = spawn_pos
@@ -175,7 +177,7 @@ func on_enemy_defeated(position: Vector2, was_boss: bool, enemy: Node = null) ->
 			if enemy and enemy.has_method("is_tentacle_marked") and enemy.is_tentacle_marked():
 				if not player.tentacle_stats.is_empty():
 					drop_chance += player.tentacle_stats.get("tentacle_drop_bonus", 0.0)
-		drop_chance = min(drop_chance, 0.8)
+		drop_chance = min(drop_chance, MAX_ITEM_DROP_CHANCE)
 		if randf() < drop_chance:
 			_spawn_item_drop(position)
 		if is_instance_valid(player) and not player.minion_stats.is_empty():
