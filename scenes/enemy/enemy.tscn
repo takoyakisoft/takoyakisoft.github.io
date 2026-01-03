@@ -13,5 +13,13 @@ script = ExtResource("1_script")
 modulate = Color(1, 0, 0, 1)
 texture = ExtResource("2_icon")
 
+[node name="StatusLabel" type="Label" parent="."]
+layout_mode = 0
+position = Vector2(-34, -58)
+custom_minimum_size = Vector2(68, 18)
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_enemy")

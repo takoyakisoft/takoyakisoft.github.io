@@ -2,6 +2,8 @@ class_name GameData
 extends Node
 
 const MAX_RELIC_SLOTS := 6
+const MAX_ATTACK_RELICS := 6
+const MAX_STAT_RELICS := 6
 const MAX_RELIC_LEVEL := 15
 
 const GEM_TYPES := [
@@ -69,6 +71,7 @@ const RELICS := {
 	{
 		"name": "ピストル",
 		"type": "weapon",
+		"category": "attack",
 		"description": "近い敵へ自動射撃。威力と連射が伸びる。",
 		"stats":
 		{
@@ -89,6 +92,7 @@ const RELICS := {
 	{
 		"name": "剣",
 		"type": "weapon",
+		"category": "attack",
 		"description": "周囲に斬撃を発生。範囲と威力が成長。",
 		"stats":
 		{
@@ -111,6 +115,7 @@ const RELICS := {
 	{
 		"name": "マグネットコア",
 		"type": "utility",
+		"category": "stat",
 		"description": "経験値の回収半径が広がる。",
 		"stats":
 		{
@@ -125,6 +130,7 @@ const RELICS := {
 	{
 		"name": "バイタリティ",
 		"type": "passive",
+		"category": "stat",
 		"description": "最大HPとシールドを増加。",
 		"stats":
 		{
@@ -139,6 +145,7 @@ const RELICS := {
 	{
 		"name": "モメンタム",
 		"type": "passive",
+		"category": "stat",
 		"description": "移動速度が上昇。",
 		"stats":
 		{
@@ -153,6 +160,7 @@ const RELICS := {
 	{
 		"name": "シールドコア",
 		"type": "passive",
+		"category": "stat",
 		"description": "シールド回復速度が上昇。",
 		"stats":
 		{
@@ -167,6 +175,7 @@ const RELICS := {
 	{
 		"name": "エギスフィールド",
 		"type": "active",
+		"category": "stat",
 		"description": "一定間隔で数秒間無敵化。",
 		"stats":
 		{
@@ -179,35 +188,233 @@ const RELICS := {
 			"invincibility_duration": 0.25,
 		},
 	},
+	"gravity_well":
+	{
+		"name": "グラビティコア",
+		"type": "active",
+		"category": "attack",
+		"description": "敵を衛星軌道に引き寄せて吹き飛ばす。",
+		"stats":
+		{
+			"cooldown": 9.0,
+			"gravity_radius": 240.0,
+			"orbit_radius": 120.0,
+			"orbit_duration": 2.4,
+			"orbit_speed": 260.0,
+			"fling_speed": 420.0,
+			"fling_damage": 10.0,
+		},
+		"per_level":
+		{
+			"cooldown": - 0.35,
+			"gravity_radius": 12.0,
+			"orbit_radius": 4.0,
+			"orbit_duration": 0.12,
+			"orbit_speed": 10.0,
+			"fling_speed": 14.0,
+			"fling_damage": 1.4,
+		},
+	},
+	"viral_chain":
+	{
+		"name": "ウィルス連鎖",
+		"type": "passive",
+		"category": "attack",
+		"description": "攻撃がウィルス感染し、周囲へ連鎖する。",
+		"stats":
+		{
+			"virus_chance": 0.2,
+			"virus_damage": 4.0,
+			"virus_radius": 90.0,
+			"virus_chain": 1.0,
+			"virus_tick": 0.7,
+			"virus_duration": 5.0,
+		},
+		"per_level":
+		{
+			"virus_chance": 0.03,
+			"virus_damage": 1.2,
+			"virus_radius": 6.0,
+			"virus_chain": 0.2,
+			"virus_tick": - 0.02,
+			"virus_duration": 0.3,
+		},
+	},
+	"berserker":
+	{
+		"name": "バーサーク",
+		"type": "active",
+		"category": "attack",
+		"description": "周期的に無敵化して殴り掛かる。",
+		"stats":
+		{
+			"cooldown": 12.0,
+			"invincibility_duration": 1.4,
+			"damage": 16.0,
+			"radius": 75.0,
+			"duration": 0.25,
+		},
+		"per_level":
+		{
+			"cooldown": - 0.45,
+			"invincibility_duration": 0.1,
+			"damage": 3.5,
+			"radius": 4.0,
+			"duration": 0.01,
+		},
+	},
+	"necromancer":
+	{
+		"name": "ネクロマンサー",
+		"type": "passive",
+		"category": "attack",
+		"description": "敵撃破時に使役する。",
+		"stats":
+		{
+			"minion_chance": 1.0,
+			"minion_damage": 7.0,
+			"minion_speed": 140.0,
+			"minion_duration": 8.0,
+			"minion_hp": 30.0,
+			"minion_cap": 3.0,
+		},
+		"per_level":
+		{
+			"minion_chance": 0.0,
+			"minion_damage": 1.6,
+			"minion_speed": 6.0,
+			"minion_duration": 0.4,
+			"minion_hp": 3.0,
+			"minion_cap": 0.2,
+		},
+	},
+	"tentacle_drop":
+	{
+		"name": "タコ足コア",
+		"type": "active",
+		"category": "attack",
+		"description": "触腕で敵を止めて攻撃。倒すとドロップ率が上がる。",
+		"stats":
+		{
+			"cooldown": 7.5,
+			"damage": 7.0,
+			"radius": 95.0,
+			"duration": 0.2,
+			"tentacle_stun": 0.9,
+			"tentacle_mark_duration": 3.0,
+			"tentacle_drop_bonus": 0.18,
+			"item_drop_bonus": 0.04,
+		},
+		"per_level":
+		{
+			"cooldown": - 0.25,
+			"damage": 1.3,
+			"radius": 4.0,
+			"duration": 0.01,
+			"tentacle_stun": 0.05,
+			"tentacle_mark_duration": 0.2,
+			"tentacle_drop_bonus": 0.02,
+			"item_drop_bonus": 0.01,
+		},
+	},
 }
 
 const CHARACTERS := {
-	"striker":
+	"gravecaller":
 	{
-		"name": "ストライカー",
-		"description": "バランス型。剣+ピストルを装備。",
+		"name": "グレイヴコーラー",
+		"description": "屍を従える。ピストル/剣/ネクロマンサー装備。",
 		"base_hp": 100.0,
-		"base_speed": 220.0,
-		"starting_relics": ["pistol", "sword"],
+		"base_speed": 215.0,
+		"starting_relics": ["pistol", "sword", "necromancer"],
+		"menu_order": 0,
 	},
-	"gunner":
+	"graviton":
 	{
-		"name": "ガンナー",
-		"description": "射撃特化。ピストル性能が高め。",
-		"base_hp": 90.0,
-		"base_speed": 230.0,
-		"starting_relics": ["pistol", "pistol", "sword"],
-	},
-	"blade":
-	{
-		"name": "ブレード",
-		"description": "近接強化。剣が強い。",
-		"base_hp": 110.0,
+		"name": "グラビトン",
+		"description": "重力制御。ピストル/剣/グラビティコア装備。",
+		"base_hp": 105.0,
 		"base_speed": 210.0,
-		"starting_relics": ["sword", "sword", "pistol"],
+		"starting_relics": ["pistol", "sword", "gravity_well"],
+		"menu_order": 1,
+	},
+	"viralist":
+	{
+		"name": "ヴァイラリスト",
+		"description": "感染拡散。ピストル/剣/ウィルス連鎖装備。",
+		"base_hp": 95.0,
+		"base_speed": 220.0,
+		"starting_relics": ["pistol", "sword", "viral_chain"],
+		"menu_order": 2,
+	},
+	"kraken":
+	{
+		"name": "クラーケン",
+		"description": "触腕の加護。ピストル/剣/タコ足コア装備。",
+		"base_hp": 110.0,
+		"base_speed": 205.0,
+		"starting_relics": ["pistol", "sword", "tentacle_drop"],
+		"menu_order": 3,
+	},
+	"ironfist":
+	{
+		"name": "アイアンフィスト",
+		"description": "無敵殴打。ピストル/剣/バーサーク装備。",
+		"base_hp": 115.0,
+		"base_speed": 205.0,
+		"starting_relics": ["pistol", "sword", "berserker"],
+		"menu_order": 4,
 	},
 }
 
+const STAGES := {
+	"forest":
+	{
+		"name": "翠森域",
+		"description": "静かな森。敵はやや柔らかい。",
+		"enemy_hp_multiplier": 0.95,
+		"enemy_damage_multiplier": 0.9,
+		"enemy_speed_multiplier": 0.95,
+		"enemy_tint": Color("4fbf7a"),
+		"boss_tint": Color("6fe6a0"),
+		"boss_hp_multiplier": 1.0,
+		"boss_damage_multiplier": 1.0,
+		"boss_speed_multiplier": 1.0,
+		"menu_order": 0,
+	},
+	"volcano":
+	{
+		"name": "灼熱火口",
+		"description": "火山地帯。敵の攻撃が重い。",
+		"enemy_hp_multiplier": 1.1,
+		"enemy_damage_multiplier": 1.25,
+		"enemy_speed_multiplier": 1.0,
+		"enemy_tint": Color("ff6b4a"),
+		"boss_tint": Color("ff8d4a"),
+		"boss_hp_multiplier": 1.2,
+		"boss_damage_multiplier": 1.3,
+		"boss_speed_multiplier": 1.05,
+		"menu_order": 1,
+	},
+	"water":
+	{
+		"name": "深淵水界",
+		"description": "水域。敵の数が多く速い。",
+		"enemy_hp_multiplier": 0.9,
+		"enemy_damage_multiplier": 1.0,
+		"enemy_speed_multiplier": 1.2,
+		"enemy_tint": Color("4aa3ff"),
+		"boss_tint": Color("6fc0ff"),
+		"boss_hp_multiplier": 0.95,
+		"boss_damage_multiplier": 1.05,
+		"boss_speed_multiplier": 1.15,
+		"menu_order": 2,
+	},
+}
+
+
+static func get_stage_data(stage_id: String) -> Dictionary:
+	return STAGES.get(stage_id, STAGES["forest"])
 
 static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 	var relic = RELICS.get(relic_id, {})
@@ -220,6 +427,8 @@ static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 		stats["cooldown"] = max(stats["cooldown"], 0.1)
 	if stats.has("duration"):
 		stats["duration"] = max(stats["duration"], 0.05)
+	if stats.has("virus_tick"):
+		stats["virus_tick"] = max(stats["virus_tick"], 0.1)
 	return stats
 
 
