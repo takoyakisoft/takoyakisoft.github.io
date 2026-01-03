@@ -416,7 +416,6 @@ const STAGES := {
 static func get_stage_data(stage_id: String) -> Dictionary:
 	return STAGES.get(stage_id, STAGES["forest"])
 
-
 static func get_relic_stats(relic_id: String, level: int) -> Dictionary:
 	var relic = RELICS.get(relic_id, {})
 	var stats = relic.get("stats", {}).duplicate(true)
